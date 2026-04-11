@@ -1,0 +1,106 @@
+{
+  "validation": [
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Advertised as gel polish remover - doesn't do a think to gel",
+      "target_text": "Not a gel polish remover although it is advertised so. Maybe works on regular, does nothing to gel.",
+      "generated_summary": "It's not a good idea"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Has a faint plastic smell, that's all.",
+      "target_text": "Smells plastic-y",
+      "generated_summary": "It's a waste of money"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Quality is not as nice as the one pictured. One of the elastic bands inside the cab is sewn on backwards so the wig keeps coming off. Don't make the same mistake I did, inspect VERY carefully before taking tags off.",
+      "target_text": "Don't make the same mistake I did",
+      "generated_summary": "The wig is not as nice as the one pictured."
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Very poor quality. Lapm does not dry the polish. Polish doesn't last",
+      "target_text": "Poor quality",
+      "generated_summary": "Poor quality."
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I didn't order right color and clumps on scalp.",
+      "target_text": "Two Stars",
+      "generated_summary": "I don't think I've ever been to a salon."
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I hear so much about this. But the cream was chalky and it had a weird smell. Are they selling refunds?",
+      "target_text": "No.. not able to use",
+      "generated_summary": "No, I don't know."
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Very thin and cheaply made.",
+      "target_text": "One Star",
+      "generated_summary": "Not worth the money."
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not enough illumination. Mirror flimsy. My mirror came with a very deep scratch.",
+      "target_text": "Disappointed",
+      "generated_summary": "I don't think it's worth the money."
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This broke within 1 week of use. The metal part for the eyebrow brush simply snapped off.",
+      "target_text": "One Star",
+      "generated_summary": "The metal part for the eyebrow brush simply snapped off"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Poor quality material, would not recommend.",
+      "target_text": "One Star",
+      "generated_summary": "Worst quality material ever."
+    }
+  ],
+  "test": [
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: when I applied a little pressure the wheel stopped spinning. Not enough power.",
+      "target_text": "Two Stars",
+      "generated_summary": "Not enough power"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I used these as suggested by a blogger I follow, and when they didn’t apply makeup the way I expected, I tried a few more techniques. I was extremely unhappy with the results of all attempts. There was a film over the silicone with a loose ridge all around, which made applying makeup even more frustrating. If I didn’t find returning these th8ngs so skeevy, I would certainly be sending them back.",
+      "target_text": "Not a good application product",
+      "generated_summary": "I don't want to use them again."
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not for me too hard to use",
+      "target_text": "Nope",
+      "generated_summary": "Not for me too hard to use"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This is blatantly plastic landfill. This won't protect anyone and is a waste of money.",
+      "target_text": "Worthless",
+      "generated_summary": "This is a waste of money."
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not as good as quality wipes like pampers These are smaller and dryer",
+      "target_text": "Wipe",
+      "generated_summary": "Not as good as quality wipes"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Every single one of the bottles is inoperable one year after the purchase. What a waste of money and plastic. More to toss into the massive junk heap that is our world these days.",
+      "target_text": "One year later, not one bottle works",
+      "generated_summary": "Waste of money and plastic"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: The caps do not stay on the pencils at all!!! Its extremely frustrating and its ruining the tips of the pencils causing the need to sharpen and waste. Eh.",
+      "target_text": "Nice colors BUT....",
+      "generated_summary": "The caps do not stay on the pencils"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Didn’t seem to do anything. I tried it many times.",
+      "target_text": "Not impressive",
+      "generated_summary": "I don’t think it’s worth the money."
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: it arrived that it was not even working. Too hard to open the clip, I broke my nail doing it. Details quality and materials were looking poorly. Returned it to the vendor right away, it's a very cheap watch and it's not worth the cost.",
+      "target_text": "not worth it",
+      "generated_summary": "Not worth the cost"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Dress description says cotton. It is not cotton, what it is is some kind of synthetic fabric that feels like what swim wear is made of. Not happy.",
+      "target_text": "NOT cotton",
+      "generated_summary": "It's not a swim suit."
+    }
+  ]
+}

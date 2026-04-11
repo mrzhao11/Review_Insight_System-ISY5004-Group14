@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local environments and caches
+.venv/
+.pycache_tmp/
+.codex/
+.DS_Store
+
+# IDE files
+.idea/
+.vscode/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# Large model directories. Keep top-level metrics and small sklearn bundle in models/.
+models/bert_sentiment/
+models/t5_summary/
+models/**/checkpoint-*/
+*.safetensors
+*.pt
+*.pth
+*.bin
+
+# Optional raw data downloads can be very large.
+data/raw/
+data/samples/
+

@@ -1,0 +1,60 @@
+{
+  "config": {
+    "train_file": "data/processed/sentiment_train.csv",
+    "validation_file": "data/processed/sentiment_validation.csv",
+    "test_file": "data/processed/sentiment_test.csv",
+    "text_column": "clean_review_text",
+    "label_column": "sentiment_target",
+    "model_name": "bert-base-uncased",
+    "output_dir": "models/bert_sentiment",
+    "max_length": 256,
+    "num_train_epochs": 2.0,
+    "train_batch_size": 8,
+    "eval_batch_size": 16,
+    "learning_rate": 2e-05,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "seed": 42
+  },
+  "dataset_sizes": {
+    "train": 964,
+    "validation": 319,
+    "test": 329
+  },
+  "train": {
+    "train_runtime": 309.0728,
+    "train_samples_per_second": 6.238,
+    "train_steps_per_second": 0.783,
+    "total_flos": 253639057367040.0,
+    "train_loss": 0.2039753304070924,
+    "epoch": 2.0
+  },
+  "validation": {
+    "eval_loss": 0.13884513080120087,
+    "eval_accuracy": 0.9655172413793104,
+    "eval_precision": 0.996309963099631,
+    "eval_recall": 0.9642857142857143,
+    "eval_f1": 0.9800362976406534,
+    "eval_macro_precision": 0.8939883148831489,
+    "eval_macro_recall": 0.9693223443223443,
+    "eval_macro_f1": 0.926799758015729,
+    "eval_runtime": 15.7954,
+    "eval_samples_per_second": 20.196,
+    "eval_steps_per_second": 1.266,
+    "epoch": 2.0
+  },
+  "test": {
+    "test_loss": 0.05542683228850365,
+    "test_accuracy": 0.9817629179331308,
+    "test_precision": 0.9966666666666667,
+    "test_recall": 0.9835526315789473,
+    "test_f1": 0.9900662251655629,
+    "test_macro_precision": 0.9121264367816092,
+    "test_macro_recall": 0.9717763157894737,
+    "test_macro_f1": 0.9394775570272258,
+    "test_runtime": 18.7551,
+    "test_samples_per_second": 17.542,
+    "test_steps_per_second": 1.12,
+    "epoch": 2.0
+  }
+}

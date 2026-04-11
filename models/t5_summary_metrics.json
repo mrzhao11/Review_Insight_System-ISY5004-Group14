@@ -1,0 +1,34 @@
+{
+  "config": {
+    "train_file": "data/processed/sentiment_train.csv",
+    "validation_file": "data/processed/sentiment_validation.csv",
+    "test_file": "data/processed/sentiment_test.csv",
+    "text_column": "clean_review_text",
+    "target_column": "clean_review_title",
+    "sentiment_column": "sentiment_label",
+    "negative_label": "negative",
+    "model_name": "google/flan-t5-small",
+    "input_max_length": 256,
+    "max_output_length": 24,
+    "num_beams": 4,
+    "batch_size": 8,
+    "fine_tuned": false
+  },
+  "dataset_sizes": {
+    "train": 241,
+    "validation": 39,
+    "test": 25
+  },
+  "validation": {
+    "exact_match": 0.0,
+    "avg_unigram_f1": 0.090371209877407,
+    "avg_generated_words": 5.666666666666667,
+    "avg_reference_words": 4.0256410256410255
+  },
+  "test": {
+    "exact_match": 0.0,
+    "avg_unigram_f1": 0.08577211677211677,
+    "avg_generated_words": 6.68,
+    "avg_reference_words": 4.04
+  }
+}

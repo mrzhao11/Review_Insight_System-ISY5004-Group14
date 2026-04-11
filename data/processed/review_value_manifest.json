@@ -1,0 +1,160 @@
+{
+  "selected_categories": [
+    "All_Beauty",
+    "Amazon_Fashion",
+    "Appliances",
+    "Handmade_Products",
+    "Health_and_Personal_Care"
+  ],
+  "config": {
+    "num_categories": 5,
+    "samples_per_category": 800,
+    "min_helpful_per_category": 120,
+    "helpful_vote_threshold": 2,
+    "min_review_words": 5,
+    "min_review_chars": 20,
+    "only_verified": false,
+    "train_ratio": 0.8,
+    "validation_ratio": 0.1,
+    "test_ratio": 0.1,
+    "seed": 42,
+    "limit": 20000
+  },
+  "totals": {
+    "selected_reviews": 4000,
+    "train_reviews": 3200,
+    "validation_reviews": 400,
+    "test_reviews": 400,
+    "high_value_labels": 600,
+    "low_value_labels": 3400
+  },
+  "categories": {
+    "All_Beauty": {
+      "source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/review_categories/All_Beauty.jsonl",
+      "meta_source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/meta_categories/meta_All_Beauty.jsonl",
+      "raw_records": 20000,
+      "eligible_records": 17798,
+      "filtered_records": 2202,
+      "high_value_labels": 120,
+      "low_value_labels": 680,
+      "product_titles_attached": 800,
+      "missing_product_titles": 0,
+      "filter_reasons": {
+        "too_few_words": 2184,
+        "empty_review_text": 2,
+        "too_few_characters": 16
+      },
+      "split_counts": {
+        "train": 640,
+        "validation": 80,
+        "test": 80
+      }
+    },
+    "Amazon_Fashion": {
+      "source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/review_categories/Amazon_Fashion.jsonl",
+      "meta_source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/meta_categories/meta_Amazon_Fashion.jsonl",
+      "raw_records": 20000,
+      "eligible_records": 17814,
+      "filtered_records": 2186,
+      "high_value_labels": 120,
+      "low_value_labels": 680,
+      "product_titles_attached": 800,
+      "missing_product_titles": 0,
+      "filter_reasons": {
+        "too_few_words": 2175,
+        "too_few_characters": 8,
+        "empty_review_text": 3
+      },
+      "split_counts": {
+        "train": 640,
+        "validation": 80,
+        "test": 80
+      }
+    },
+    "Appliances": {
+      "source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/review_categories/Appliances.jsonl",
+      "meta_source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/meta_categories/meta_Appliances.jsonl",
+      "raw_records": 20000,
+      "eligible_records": 17267,
+      "filtered_records": 2733,
+      "high_value_labels": 120,
+      "low_value_labels": 680,
+      "product_titles_attached": 800,
+      "missing_product_titles": 0,
+      "filter_reasons": {
+        "too_few_words": 2721,
+        "too_few_characters": 11,
+        "empty_review_text": 1
+      },
+      "split_counts": {
+        "train": 640,
+        "validation": 80,
+        "test": 80
+      }
+    },
+    "Handmade_Products": {
+      "source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/review_categories/Handmade_Products.jsonl",
+      "meta_source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/meta_categories/meta_Handmade_Products.jsonl",
+      "raw_records": 20000,
+      "eligible_records": 17579,
+      "filtered_records": 2421,
+      "high_value_labels": 120,
+      "low_value_labels": 680,
+      "product_titles_attached": 800,
+      "missing_product_titles": 0,
+      "filter_reasons": {
+        "too_few_words": 2390,
+        "empty_review_text": 18,
+        "too_few_characters": 13
+      },
+      "split_counts": {
+        "train": 640,
+        "validation": 80,
+        "test": 80
+      }
+    },
+    "Health_and_Personal_Care": {
+      "source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/review_categories/Health_and_Personal_Care.jsonl",
+      "meta_source": "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/meta_categories/meta_Health_and_Personal_Care.jsonl",
+      "raw_records": 20000,
+      "eligible_records": 17650,
+      "filtered_records": 2350,
+      "high_value_labels": 120,
+      "low_value_labels": 680,
+      "product_titles_attached": 800,
+      "missing_product_titles": 0,
+      "filter_reasons": {
+        "too_few_words": 2332,
+        "too_few_characters": 12,
+        "empty_review_text": 6
+      },
+      "split_counts": {
+        "train": 640,
+        "validation": 80,
+        "test": 80
+      }
+    }
+  },
+  "files": {
+    "train_csv": "data/processed/review_value_train.csv",
+    "validation_csv": "data/processed/review_value_validation.csv",
+    "test_csv": "data/processed/review_value_test.csv"
+  },
+  "columns": [
+    "review_id",
+    "category",
+    "product_id",
+    "asin",
+    "parent_asin",
+    "product_title",
+    "split",
+    "rating",
+    "helpful_votes",
+    "review_value_label",
+    "verified_purchase",
+    "review_text_word_count",
+    "review_text_char_count",
+    "clean_review_title",
+    "clean_review_text"
+  ]
+}
