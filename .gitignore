@@ -11,6 +11,8 @@ __pycache__/
 .venv/
 .pycache_tmp/
 .codex/
+.env
+.env.local
 .DS_Store
 
 # IDE files
@@ -34,4 +36,3 @@ models/**/checkpoint-*/
 # Optional raw data downloads can be very large.
 data/raw/
 data/samples/
-

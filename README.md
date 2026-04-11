@@ -119,6 +119,12 @@ export ARK_API_KEY="your-ark-api-key"
 .venv/bin/streamlit run app/streamlit_app.py
 ```
 
+You can also copy `.env.example` to `.env` and fill in your local key. `.env` is ignored by Git:
+
+```bash
+cp .env.example .env
+```
+
 `ARK_MODEL` can be any enabled Ark text-generation model available to your account. This project currently uses `doubao-seed-2-0-lite-260215` when `ARK_MODEL` is not set:
 
 ```bash
