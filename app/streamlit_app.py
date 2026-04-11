@@ -54,6 +54,14 @@ UPLOAD_OPTIONAL_COLUMNS = (
 )
 UPLOAD_ANALYSIS_LIMIT = 50
 ARK_DEMO_MODEL = "doubao-seed-2-0-lite-260215"
+CATEGORY_DISPLAY_NAMES = {
+    "All": "All Categories",
+    "All_Beauty": "Beauty Products",
+    "Amazon_Fashion": "Fashion & Apparel",
+    "Appliances": "Home Appliances",
+    "Handmade_Products": "Handmade Products",
+    "Health_and_Personal_Care": "Health & Personal Care",
+}
 
 
 def load_local_env(env_path: Path) -> None:
@@ -523,6 +531,20 @@ def clean_upload_value(value: Any) -> str:
     return clean_text(str(value))
 
 
+def format_category_label(category: Any) -> str:
+    """Map dataset category codes to merchant-friendly labels."""
+    category_text = str(category)
+    return CATEGORY_DISPLAY_NAMES.get(category_text, category_text.replace("_", " "))
+
+
+def with_display_categories(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Return a copy with category codes replaced by presentation labels."""
+    display_frame = dataframe.copy()
+    if "category" in display_frame.columns:
+        display_frame["category"] = display_frame["category"].map(format_category_label)
+    return display_frame
+
+
 def prepare_uploaded_reviews(uploaded_dataframe: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str]]:
     """Validate and normalize a merchant-uploaded review CSV."""
     dataframe = uploaded_dataframe.copy()
@@ -707,7 +729,7 @@ def render_chat_bubble(role: str, content: str) -> None:
 
 def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_ark_llm: bool) -> None:
     """Render the simple dialogue component."""
-    st.subheader("Merchant Assistant")
+    st.subheader("Merchant Copilot")
     st.caption(
         "Ask about the current category or product. Ark LLM can answer with richer "
         "merchant recommendations when configured; local rules remain available as fallback."
@@ -738,7 +760,7 @@ def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_ark_llm:
                 "role": "assistant",
                 "content": (
                     f"You are currently viewing '{scope_label}'. "
-                    "Ask about review counts, complaint themes, products, or representative negative reviews."
+                    "Ask about review counts, complaint themes, risky products, or recommended actions."
                 ),
             }
         ]
@@ -787,11 +809,11 @@ def main() -> None:
     st.markdown(
         """
         <div class="hero-card">
-            <div class="hero-eyebrow">Review Intelligence Pipeline</div>
+            <div class="hero-eyebrow">Merchant Review Intelligence</div>
             <div class="hero-title">Review Insight Studio</div>
             <p class="hero-copy">
-                Explore high-value reviews, surface negative issues, generate short complaint titles,
-                and test a simple merchant-facing dialogue component in one place.
+                Monitor customer pain points, inspect high-value negative reviews,
+                generate complaint titles, and ask for merchant-ready recommendations.
             </p>
         </div>
         """,
@@ -801,7 +823,11 @@ def main() -> None:
     st.sidebar.header("Filter Scope")
     st.sidebar.caption("Demo scope uses the held-out test set.")
     category_options = ["All"] + sorted(merged_reviews["category"].dropna().unique().tolist())
-    category = st.sidebar.selectbox("Category", category_options)
+    category = st.sidebar.selectbox(
+        "Category",
+        category_options,
+        format_func=format_category_label,
+    )
 
     product_choices = build_product_choices(merged_reviews, category)
     product_labels = [label if product_id == "All" else f"{label} ({product_id})" for product_id, label in product_choices]
@@ -834,13 +860,19 @@ def main() -> None:
     scope_label = (
         selected_product_label
         if selected_product_id != "All"
-        else (category if category != "All" else "Held-out test set")
+        else (format_category_label(category) if category != "All" else "Test Set")
     )
     scope_key = f"{DEMO_SPLIT}_{category}_{selected_product_id}"
     scope_snapshot = build_scope_snapshot(scope_dataframe, scope_label=scope_label)
 
     tab_overview, tab_explorer, tab_live, tab_upload, tab_chat = st.tabs(
-        ["Overview", "Explorer", "Live Analyzer", "Merchant Upload", "Assistant"]
+        [
+            "Business Overview",
+            "Issue Explorer",
+            "Single Review Check",
+            "Merchant Upload",
+            "Merchant Copilot",
+        ]
     )
 
     with tab_overview:
@@ -854,13 +886,13 @@ def main() -> None:
             f"{metrics['sentiment']['test']['test_f1']:.3f}",
         )
         result_col3.metric(
-            "Summary Demo Mode",
+            "Complaint Title Mode",
             "Zero-shot T5",
             "sample-based showcase",
         )
 
         metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
-        metric_col1.metric("Processed Reviews", f"{overview_snapshot['total_reviews']:,}")
+        metric_col1.metric("Test Reviews", f"{overview_snapshot['total_reviews']:,}")
         metric_col2.metric("High-value Reviews", f"{overview_snapshot['high_value_reviews']:,}")
         metric_col3.metric("Negative Reviews", f"{overview_snapshot['negative_reviews']:,}")
         metric_col4.metric(
@@ -871,7 +903,7 @@ def main() -> None:
         chart_col1, chart_col2 = st.columns([1.2, 1])
         with chart_col1:
             st.plotly_chart(
-                build_category_overview_figure(merged_reviews),
+                build_category_overview_figure(with_display_categories(merged_reviews)),
                 width="stretch",
                 key="overview_category_chart",
             )
@@ -896,6 +928,16 @@ def main() -> None:
             )
             .reset_index()
             .sort_values(by="negative_reviews", ascending=False)
+        )
+        category_table["category"] = category_table["category"].map(format_category_label)
+        category_table = category_table.rename(
+            columns={
+                "category": "Category",
+                "total_reviews": "Reviews",
+                "high_value_reviews": "High-value Reviews",
+                "negative_reviews": "Negative Reviews",
+                "avg_rating": "Average Rating",
+            }
         )
         st.dataframe(category_table, width="stretch", hide_index=True)
 
