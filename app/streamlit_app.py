@@ -53,6 +53,7 @@ UPLOAD_OPTIONAL_COLUMNS = (
     "verified_purchase",
 )
 UPLOAD_ANALYSIS_LIMIT = 50
+ARK_DEFAULT_MODEL = "doubao-seed-2-0-lite-260215"
 
 
 def inject_styles() -> None:
@@ -684,12 +685,12 @@ def render_chat_bubble(role: str, content: str) -> None:
     )
 
 
-def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_external_llm: bool) -> None:
+def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_ark_llm: bool) -> None:
     """Render the simple dialogue component."""
     st.subheader("Merchant Assistant")
     st.caption(
-        "Ask about the current category or product. The assistant works offline by default "
-        "and can optionally use an external API if configured."
+        "Ask about the current category or product. Ark LLM can answer with richer "
+        "merchant recommendations when configured; local rules remain available as fallback."
     )
 
     chat_ui_version = "assistant_en_v4"
@@ -739,7 +740,7 @@ def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_external
             question,
             scope_dataframe,
             scope_label=scope_label,
-            use_external_llm=use_external_llm,
+            use_ark_llm=use_ark_llm,
         )
     st.session_state["chat_messages"].append({"role": "assistant", "content": answer})
     st.rerun()
@@ -788,18 +789,21 @@ def main() -> None:
     selected_index = product_labels.index(selected_label)
     selected_product_id, selected_product_label = product_choices[selected_index]
 
-    openai_ready = bool(os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_MODEL"))
-    use_external_llm = st.sidebar.toggle(
-        "Use external LLM in chat",
+    ark_ready = bool(os.getenv("ARK_API_KEY"))
+    ark_model = os.getenv("ARK_MODEL", ARK_DEFAULT_MODEL)
+    use_ark_llm = st.sidebar.toggle(
+        "Use Ark LLM in chat",
         value=False,
-        disabled=not openai_ready,
+        disabled=not ark_ready,
         help=(
-            "Enable this only if OPENAI_API_KEY and OPENAI_MODEL are configured. "
-            "Otherwise the chat assistant stays fully local."
+            "Enable this after configuring ARK_API_KEY. ARK_MODEL is optional and "
+            f"defaults to {ARK_DEFAULT_MODEL}."
         ),
     )
-    if not openai_ready:
-        st.sidebar.caption("External API chat is optional and currently not configured.")
+    if ark_ready:
+        st.sidebar.caption(f"Ark chat model: {ark_model}")
+    else:
+        st.sidebar.caption("Set ARK_API_KEY to enable Ark-powered chat.")
 
     scope_dataframe = filter_scope_dataframe(
         merged_reviews,
@@ -936,7 +940,7 @@ def main() -> None:
         render_chat(
             scope_dataframe,
             scope_label=scope_label,
-            use_external_llm=use_external_llm,
+            use_ark_llm=use_ark_llm,
         )
 
 

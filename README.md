@@ -112,15 +112,21 @@ python3 -m venv .venv
 
 The dashboard runs fully local by default.
 
-The assistant tab can optionally call an external OpenAI-compatible model if both environment variables are set:
+The assistant tab can optionally call Volcengine Ark through its OpenAI-compatible API. Configure the Ark API key before launching Streamlit:
 
 ```bash
-export OPENAI_API_KEY="your-api-key"
-export OPENAI_MODEL="your-model-name"
+export ARK_API_KEY="your-ark-api-key"
 .venv/bin/streamlit run app/streamlit_app.py
 ```
 
-If those variables are not set, the assistant uses local rule-based answers from the dashboard data.
+The default Ark model is `doubao-seed-2-0-lite-260215`. Override it only when needed:
+
+```bash
+export ARK_MODEL="doubao-seed-2-0-lite-260215"
+export ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
+```
+
+If `ARK_API_KEY` is not set, the assistant uses local rule-based answers from the dashboard data.
 
 Do not start the app with `python app/streamlit_app.py`; Streamlit apps must be launched with `streamlit run`.
 

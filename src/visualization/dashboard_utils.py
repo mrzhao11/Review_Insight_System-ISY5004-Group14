@@ -16,6 +16,9 @@ except ImportError:  # pragma: no cover - optional dependency at runtime
     OpenAI = None
 
 
+ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
+ARK_DEFAULT_MODEL = "doubao-seed-2-0-lite-260215"
+
 NUMERIC_COLUMNS = {
     "rating",
     "helpful_votes",
@@ -354,12 +357,14 @@ def _retrieve_reviews_for_question(question: str, dataframe: pd.DataFrame, limit
 
 
 def _build_context_prompt(snapshot: Dict[str, Any], question: str) -> str:
-    """Convert dashboard context into a compact prompt for optional LLM use."""
+    """Convert dashboard context into a compact prompt for Ark LLM use."""
     keyword_text = ", ".join(keyword for keyword, _ in snapshot["top_keywords"][:6]) or "none"
     review_bullets = _format_review_bullets(snapshot["representative_reviews"])
     return (
-        "You are a review analytics assistant for an e-commerce merchant. "
-        "Answer in concise English based only on the supplied dashboard context.\n\n"
+        "You are an intelligent review analytics assistant for an e-commerce merchant. "
+        "Use only the supplied dashboard context; do not invent products, counts, or reviews. "
+        "Answer in the same language as the user's question. If the user asks for advice, "
+        "give concise, practical merchant actions. If evidence is limited, say so clearly.\n\n"
         f"Scope: {snapshot['scope_label']}\n"
         f"Total reviews: {snapshot['total_reviews']}\n"
         f"High-value reviews: {snapshot['high_value_reviews']}\n"
@@ -367,25 +372,35 @@ def _build_context_prompt(snapshot: Dict[str, Any], question: str) -> str:
         f"Negative reviews: {snapshot['negative_reviews']}\n"
         f"High-value negative reviews: {snapshot['high_value_negative_reviews']}\n"
         f"Average rating: {snapshot['average_rating']:.2f}\n"
+        f"Unique products: {snapshot['unique_products']}\n"
         f"Top complaint keywords: {keyword_text}\n"
         "Representative reviews:\n"
         f"{review_bullets or '- No representative reviews available.'}\n\n"
+        "When useful, structure the answer with: key finding, evidence, recommended action.\n"
         f"User question: {question}"
     )
 
 
-def _answer_with_openai(snapshot: Dict[str, Any], question: str) -> str | None:
-    """Use the OpenAI API if the environment is configured for it."""
-    api_key = os.getenv("OPENAI_API_KEY")
-    model_name = os.getenv("OPENAI_MODEL")
+def _answer_with_ark(snapshot: Dict[str, Any], question: str) -> str | None:
+    """Use Volcengine Ark through the OpenAI-compatible Responses API."""
+    api_key = os.getenv("ARK_API_KEY")
+    model_name = os.getenv("ARK_MODEL", ARK_DEFAULT_MODEL)
+    base_url = os.getenv("ARK_BASE_URL", ARK_BASE_URL)
     if not api_key or not model_name or OpenAI is None:
         return None
 
     try:
-        client = OpenAI(api_key=api_key)
+        client = OpenAI(
+            base_url=base_url,
+            api_key=api_key,
+            timeout=30.0,
+        )
         response = client.responses.create(
             model=model_name,
             input=_build_context_prompt(snapshot, question),
+            extra_body={
+                "thinking": {"type": "disabled"},
+            },
         )
         return (response.output_text or "").strip() or None
     except Exception:
@@ -397,12 +412,12 @@ def answer_chat_question(
     dataframe: pd.DataFrame,
     *,
     scope_label: str,
-    use_external_llm: bool = False,
+    use_ark_llm: bool = False,
 ) -> str:
-    """Answer a chat question with local rules and optional LLM fallback."""
+    """Answer a chat question with Ark LLM and local-rule fallback."""
     snapshot = build_scope_snapshot(dataframe, scope_label=scope_label)
-    if use_external_llm:
-        llm_answer = _answer_with_openai(snapshot, question)
+    if use_ark_llm:
+        llm_answer = _answer_with_ark(snapshot, question)
         if llm_answer:
             return llm_answer
 
