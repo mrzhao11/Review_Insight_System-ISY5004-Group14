@@ -41,6 +41,18 @@ PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 BERT_MODEL_DIR = MODELS_DIR / "bert_sentiment"
 SUMMARY_MODEL_NAME = "google/flan-t5-small"
+DEMO_SPLIT = "test"
+UPLOAD_REQUIRED_COLUMNS = ("review_text",)
+UPLOAD_OPTIONAL_COLUMNS = (
+    "review_title",
+    "rating",
+    "product_id",
+    "product_title",
+    "category",
+    "helpful_votes",
+    "verified_purchase",
+)
+UPLOAD_ANALYSIS_LIMIT = 50
 
 
 def inject_styles() -> None:
@@ -433,6 +445,210 @@ def render_live_analyzer() -> None:
     )
 
 
+def build_upload_template() -> pd.DataFrame:
+    """Create a strict CSV template for merchant uploads."""
+    return pd.DataFrame(
+        [
+            {
+                "review_text": "The bottle leaked after two days and the replacement cap did not fit.",
+                "review_title": "Leaking bottle",
+                "rating": 2,
+                "product_id": "SKU-001",
+                "product_title": "Insulated Water Bottle",
+                "category": "Drinkware",
+                "helpful_votes": 0,
+                "verified_purchase": True,
+            },
+            {
+                "review_text": "Arrived on time, works well, and the finish feels sturdy.",
+                "review_title": "Solid purchase",
+                "rating": 5,
+                "product_id": "SKU-002",
+                "product_title": "Desk Lamp",
+                "category": "Home Office",
+                "helpful_votes": 1,
+                "verified_purchase": True,
+            },
+        ],
+        columns=[*UPLOAD_REQUIRED_COLUMNS, *UPLOAD_OPTIONAL_COLUMNS],
+    )
+
+
+def build_product_choices(dataframe: pd.DataFrame, category: str) -> list[tuple[str, str]]:
+    """Build product filter choices from the current demo scope."""
+    scoped = dataframe if category == "All" else dataframe[dataframe["category"] == category]
+    if scoped.empty:
+        return [("All", "All products")]
+
+    product_frame = (
+        scoped[["product_id", "product_title"]]
+        .drop_duplicates()
+        .fillna("")
+        .sort_values(by=["product_title", "product_id"])
+    )
+    choices = [("All", "All products")]
+    for product_id, product_title in product_frame.itertuples(index=False, name=None):
+        product_id = str(product_id).strip()
+        product_title = str(product_title).strip() or "Untitled product"
+        if product_id:
+            choices.append((product_id, product_title))
+    return choices
+
+
+def clean_upload_value(value: Any) -> str:
+    """Clean a possibly-empty uploaded CSV cell."""
+    if pd.isna(value):
+        return ""
+    return clean_text(str(value))
+
+
+def prepare_uploaded_reviews(uploaded_dataframe: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str]]:
+    """Validate and normalize a merchant-uploaded review CSV."""
+    dataframe = uploaded_dataframe.copy()
+    dataframe.columns = [str(column).strip() for column in dataframe.columns]
+    missing_columns = [
+        column for column in UPLOAD_REQUIRED_COLUMNS if column not in dataframe.columns
+    ]
+    if missing_columns:
+        return None, missing_columns
+
+    dataframe["clean_review_text"] = dataframe["review_text"].map(clean_upload_value)
+    title_source = (
+        dataframe["review_title"]
+        if "review_title" in dataframe.columns
+        else pd.Series([""] * len(dataframe), index=dataframe.index)
+    )
+    dataframe["clean_review_title"] = title_source.map(clean_upload_value)
+    dataframe = dataframe[dataframe["clean_review_text"] != ""].reset_index(drop=True)
+    return dataframe, []
+
+
+def analyze_uploaded_reviews(dataframe: pd.DataFrame, row_limit: int) -> pd.DataFrame:
+    """Run local models over uploaded merchant reviews."""
+    analysis_rows: list[dict[str, Any]] = []
+    for _, row in dataframe.head(row_limit).iterrows():
+        text = str(row["clean_review_text"])
+        value_result = predict_review_value(text)
+        sentiment_result = predict_sentiment(text)
+        generated_title = (
+            summarize_issue(text) if sentiment_result["label"] == "negative" else ""
+        )
+        analysis_rows.append(
+            {
+                "review_text": text,
+                "review_value": "High" if value_result["label"] == 1 else "Low",
+                "review_value_probability": round(value_result["probability"], 4),
+                "sentiment": str(sentiment_result["label"]).capitalize(),
+                "negative_probability": round(
+                    float(sentiment_result["negative_probability"]),
+                    4,
+                ),
+                "generated_complaint_title": generated_title,
+                "product_id": row.get("product_id", ""),
+                "product_title": row.get("product_title", ""),
+                "rating": row.get("rating", ""),
+            }
+        )
+    return pd.DataFrame(analysis_rows)
+
+
+def render_merchant_upload() -> None:
+    """Render the merchant CSV upload interface."""
+    st.subheader("Merchant Review Upload")
+    st.caption(
+        "Upload a merchant review CSV to run the local review-value, sentiment, "
+        "and complaint-title pipeline on your own data."
+    )
+
+    st.info(
+        "CSV format requirement: the file must be UTF-8 CSV and must include a "
+        "`review_text` column. Optional columns are `review_title`, `rating`, "
+        "`product_id`, `product_title`, `category`, `helpful_votes`, and "
+        "`verified_purchase`. Column names are case-sensitive."
+    )
+    st.download_button(
+        "Download CSV Template",
+        data=build_upload_template().to_csv(index=False).encode("utf-8"),
+        file_name="merchant_review_upload_template.csv",
+        mime="text/csv",
+    )
+
+    uploaded_file = st.file_uploader(
+        "Upload merchant review CSV",
+        type=["csv"],
+        help="Required column: review_text. Keep the header row exactly as shown in the template.",
+    )
+    if uploaded_file is None:
+        return
+
+    try:
+        uploaded_dataframe = pd.read_csv(uploaded_file)
+    except Exception as exc:
+        st.error(f"Could not read this CSV file: {exc}")
+        return
+
+    prepared_dataframe, missing_columns = prepare_uploaded_reviews(uploaded_dataframe)
+    if missing_columns:
+        st.error(
+            "The uploaded file is missing required column(s): "
+            + ", ".join(missing_columns)
+        )
+        return
+    if prepared_dataframe is None or prepared_dataframe.empty:
+        st.warning("No usable review text was found after cleaning the uploaded file.")
+        return
+
+    st.success(f"Loaded {len(prepared_dataframe):,} usable reviews.")
+    preview_columns = [
+        column
+        for column in [
+            "review_text",
+            "review_title",
+            "rating",
+            "product_id",
+            "product_title",
+            "category",
+        ]
+        if column in prepared_dataframe.columns
+    ]
+    st.dataframe(
+        prepared_dataframe[preview_columns].head(10),
+        width="stretch",
+        hide_index=True,
+    )
+
+    row_limit = st.slider(
+        "Rows to analyze",
+        min_value=1,
+        max_value=min(len(prepared_dataframe), UPLOAD_ANALYSIS_LIMIT),
+        value=min(len(prepared_dataframe), 10),
+        help="Batch analysis is capped for demo speed because BERT and T5 run locally.",
+    )
+    if not st.button("Analyze Uploaded Reviews", type="primary"):
+        return
+
+    with st.spinner("Running local models on the uploaded reviews..."):
+        result_dataframe = analyze_uploaded_reviews(prepared_dataframe, row_limit)
+
+    result_col1, result_col2, result_col3 = st.columns(3)
+    result_col1.metric("Analyzed Rows", f"{len(result_dataframe):,}")
+    result_col2.metric(
+        "Predicted Negative",
+        f"{int((result_dataframe['sentiment'] == 'Negative').sum()):,}",
+    )
+    result_col3.metric(
+        "Predicted High Value",
+        f"{int((result_dataframe['review_value'] == 'High').sum()):,}",
+    )
+    st.dataframe(result_dataframe, width="stretch", hide_index=True)
+    st.download_button(
+        "Download Analysis Results",
+        data=result_dataframe.to_csv(index=False).encode("utf-8"),
+        file_name="merchant_review_analysis_results.csv",
+        mime="text/csv",
+    )
+
+
 def render_summary_samples(samples: list[dict[str, str]]) -> None:
     """Render a few curated summary examples."""
     if not samples:
@@ -488,7 +704,7 @@ def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_external
     ):
         if column.button(
             suggestion,
-            use_container_width=True,
+            width="stretch",
             key=f"chat_suggestion_{chat_ui_version}_{scope_label}_{index}",
         ):
             st.session_state["pending_chat_question"] = suggestion
@@ -541,8 +757,11 @@ def main() -> None:
 
     payload = load_payload()
     metrics = load_metrics()
-    merged_reviews = payload["merged_reviews"]
-    overview_snapshot = payload["overview_snapshot"]
+    merged_reviews = filter_scope_dataframe(payload["merged_reviews"], split=DEMO_SPLIT)
+    overview_snapshot = build_scope_snapshot(
+        merged_reviews,
+        scope_label="Held-out test set",
+    )
 
     st.markdown(
         """
@@ -559,10 +778,11 @@ def main() -> None:
     )
 
     st.sidebar.header("Filter Scope")
-    split = st.sidebar.selectbox("Dataset split", ["all", "train", "validation", "test"])
-    category = st.sidebar.selectbox("Category", payload["category_options"])
+    st.sidebar.caption("Demo scope uses the held-out test set.")
+    category_options = ["All"] + sorted(merged_reviews["category"].dropna().unique().tolist())
+    category = st.sidebar.selectbox("Category", category_options)
 
-    product_choices = payload["products_by_category"].get(category, [("All", "All products")])
+    product_choices = build_product_choices(merged_reviews, category)
     product_labels = [label if product_id == "All" else f"{label} ({product_id})" for product_id, label in product_choices]
     selected_label = st.sidebar.selectbox("Product", product_labels)
     selected_index = product_labels.index(selected_label)
@@ -585,18 +805,18 @@ def main() -> None:
         merged_reviews,
         category=category,
         product_id=selected_product_id,
-        split=split,
+        split=DEMO_SPLIT,
     )
     scope_label = (
         selected_product_label
         if selected_product_id != "All"
-        else (category if category != "All" else "Entire evaluation set")
+        else (category if category != "All" else "Held-out test set")
     )
-    scope_key = f"{split}_{category}_{selected_product_id}"
+    scope_key = f"{DEMO_SPLIT}_{category}_{selected_product_id}"
     scope_snapshot = build_scope_snapshot(scope_dataframe, scope_label=scope_label)
 
-    tab_overview, tab_explorer, tab_live, tab_chat = st.tabs(
-        ["Overview", "Explorer", "Live Analyzer", "Assistant"]
+    tab_overview, tab_explorer, tab_live, tab_upload, tab_chat = st.tabs(
+        ["Overview", "Explorer", "Live Analyzer", "Merchant Upload", "Assistant"]
     )
 
     with tab_overview:
@@ -628,7 +848,7 @@ def main() -> None:
         with chart_col1:
             st.plotly_chart(
                 build_category_overview_figure(merged_reviews),
-                use_container_width=True,
+                width="stretch",
                 key="overview_category_chart",
             )
         with chart_col2:
@@ -636,7 +856,7 @@ def main() -> None:
             if keyword_figure is not None:
                 st.plotly_chart(
                     keyword_figure,
-                    use_container_width=True,
+                    width="stretch",
                     key="overview_keyword_chart",
                 )
             else:
@@ -653,7 +873,7 @@ def main() -> None:
             .reset_index()
             .sort_values(by="negative_reviews", ascending=False)
         )
-        st.dataframe(category_table, use_container_width=True, hide_index=True)
+        st.dataframe(category_table, width="stretch", hide_index=True)
 
         st.markdown("**Generated Complaint Title Samples**")
         render_summary_samples(metrics["summary_samples"].get("test", []))
@@ -674,7 +894,7 @@ def main() -> None:
             if keyword_figure is not None:
                 st.plotly_chart(
                     keyword_figure,
-                    use_container_width=True,
+                    width="stretch",
                     key=f"explorer_keyword_chart_{scope_key}",
                 )
             else:
@@ -708,6 +928,9 @@ def main() -> None:
 
     with tab_live:
         render_live_analyzer()
+
+    with tab_upload:
+        render_merchant_upload()
 
     with tab_chat:
         render_chat(
