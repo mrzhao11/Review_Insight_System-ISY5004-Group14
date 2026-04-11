@@ -17,7 +17,7 @@ except ImportError:  # pragma: no cover - optional dependency at runtime
 
 
 ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
-ARK_DEFAULT_MODEL = "doubao-seed-2-0-lite-260215"
+ARK_DEMO_MODEL = "doubao-seed-2-0-lite-260215"
 
 NUMERIC_COLUMNS = {
     "rating",
@@ -384,7 +384,7 @@ def _build_context_prompt(snapshot: Dict[str, Any], question: str) -> str:
 def _answer_with_ark(snapshot: Dict[str, Any], question: str) -> str | None:
     """Use Volcengine Ark through the OpenAI-compatible Responses API."""
     api_key = os.getenv("ARK_API_KEY")
-    model_name = os.getenv("ARK_MODEL", ARK_DEFAULT_MODEL)
+    model_name = os.getenv("ARK_MODEL", ARK_DEMO_MODEL)
     base_url = os.getenv("ARK_BASE_URL", ARK_BASE_URL)
     if not api_key or not model_name or OpenAI is None:
         return None

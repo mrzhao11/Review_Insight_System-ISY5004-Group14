@@ -119,14 +119,14 @@ export ARK_API_KEY="your-ark-api-key"
 .venv/bin/streamlit run app/streamlit_app.py
 ```
 
-The default Ark model is `doubao-seed-2-0-lite-260215`. Override it only when needed:
+`ARK_MODEL` can be any enabled Ark text-generation model available to your account. This project currently uses `doubao-seed-2-0-lite-260215` when `ARK_MODEL` is not set:
 
 ```bash
 export ARK_MODEL="doubao-seed-2-0-lite-260215"
 export ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 ```
 
-If `ARK_API_KEY` is not set, the assistant uses local rule-based answers from the dashboard data.
+If `ARK_API_KEY` is not set, the assistant uses local rule-based answers from the dashboard data. The API key is never stored in the repository; configure it in your terminal or deployment environment.
 
 Do not start the app with `python app/streamlit_app.py`; Streamlit apps must be launched with `streamlit run`.
 

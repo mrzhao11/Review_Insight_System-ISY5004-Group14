@@ -53,7 +53,7 @@ UPLOAD_OPTIONAL_COLUMNS = (
     "verified_purchase",
 )
 UPLOAD_ANALYSIS_LIMIT = 50
-ARK_DEFAULT_MODEL = "doubao-seed-2-0-lite-260215"
+ARK_DEMO_MODEL = "doubao-seed-2-0-lite-260215"
 
 
 def inject_styles() -> None:
@@ -790,20 +790,20 @@ def main() -> None:
     selected_product_id, selected_product_label = product_choices[selected_index]
 
     ark_ready = bool(os.getenv("ARK_API_KEY"))
-    ark_model = os.getenv("ARK_MODEL", ARK_DEFAULT_MODEL)
+    ark_model = os.getenv("ARK_MODEL", ARK_DEMO_MODEL)
     use_ark_llm = st.sidebar.toggle(
         "Use Ark LLM in chat",
         value=False,
         disabled=not ark_ready,
         help=(
-            "Enable this after configuring ARK_API_KEY. ARK_MODEL is optional and "
-            f"defaults to {ARK_DEFAULT_MODEL}."
+            "Enable this after configuring ARK_API_KEY. ARK_MODEL can be any "
+            "enabled Ark text model; this project uses the demo model when it is not set."
         ),
     )
     if ark_ready:
-        st.sidebar.caption(f"Ark chat model: {ark_model}")
+        st.sidebar.caption(f"Current Ark chat model: {ark_model}")
     else:
-        st.sidebar.caption("Set ARK_API_KEY to enable Ark-powered chat.")
+        st.sidebar.caption("ARK_API_KEY is not configured. Chat is using local fallback.")
 
     scope_dataframe = filter_scope_dataframe(
         merged_reviews,
