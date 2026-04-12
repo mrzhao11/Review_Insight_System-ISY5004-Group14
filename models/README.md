@@ -14,11 +14,17 @@ To recreate them, run:
 
 ```bash
 .venv/bin/python -m src.sentiment.train_bert_sentiment
-.venv/bin/python -m src.summarization.train_t5 --allow-download
 .venv/bin/python -m src.preprocessing.generate_complaint_titles
+.venv/bin/python -m src.preprocessing.resplit_complaint_titles
 .venv/bin/python -m src.summarization.fine_tune_t5_pseudo --allow-download
+.venv/bin/python -m src.summarization.train_t5 \
+  --train-file data/processed/pseudo_summary_train.csv \
+  --validation-file data/processed/pseudo_summary_validation.csv \
+  --test-file data/processed/pseudo_summary_test.csv \
+  --target-column llm_complaint_title \
+  --allow-download
 ```
 
-The zero-shot summarization command evaluates the Flan-T5 baseline. The complaint-title preprocessing command uses Ark as a teacher for calibrated negative reviews, then the fine-tuning command trains a local T5 student in `models/t5_pseudo_summary/`.
+The complaint-title preprocessing command uses Ark as a teacher for calibrated negative reviews. The re-split command expands the pseudo-title test split to 61 rows, and the fine-tuning command trains a local T5 student in `models/t5_pseudo_summary/`. The zero-shot summarization command evaluates the baseline on the same pseudo-title split and now records ROUGE-1, ROUGE-2, and ROUGE-L.
 
 `src.preprocessing.generate_complaint_titles` requires `ARK_API_KEY`. If `google/flan-t5-small` is already cached locally, `--allow-download` can be omitted from the T5 commands.

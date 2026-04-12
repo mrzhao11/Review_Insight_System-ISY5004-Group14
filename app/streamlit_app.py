@@ -220,14 +220,14 @@ def load_metrics() -> dict[str, Any]:
         summary_samples = json.loads(pseudo_samples_path.read_text())
         summary_display_name = "Pseudo-label T5 student"
         summary_display_delta = (
-            f"test unigram F1 {summary_metrics['test']['avg_unigram_f1']:.3f}"
+            f"test ROUGE-L F1 {summary_metrics['test']['rougeL_f1']:.3f}"
         )
     else:
         summary_metrics = zero_shot_metrics
         summary_samples = zero_shot_samples
         summary_display_name = "Zero-shot T5"
         summary_display_delta = (
-            f"test unigram F1 {zero_shot_metrics['test']['avg_unigram_f1']:.3f}"
+            f"test ROUGE-L F1 {zero_shot_metrics['test']['rougeL_f1']:.3f}"
         )
 
     return {

@@ -1,106 +1,106 @@
 {
   "validation": [
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Advertised as gel polish remover - doesn't do a think to gel",
-      "target_text": "Fails to remove gel polish",
-      "generated_summary": "Product advertised as gel polish remover"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Junk. Not sealed edges so there is cotton fluff everywhere...including your eyeball.",
+      "target_text": "Unsealed edges causes cotton fluff",
+      "generated_summary": "No sealed edges, cotton fluff everywhere"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Has a faint plastic smell, that's all.",
-      "target_text": "Has a faint plastic smell",
-      "generated_summary": "Has faint plastic smell"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: These look like dollar store earrings. Awkwardly big. I'd have to pay to return them, so they went in the trash.",
+      "target_text": "Cheap-looking oversized earrings",
+      "generated_summary": "Earrings look like dollar store earrings"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Quality is not as nice as the one pictured. One of the elastic bands inside the cab is sewn on backwards so the wig keeps coming off. Don't make the same mistake I did, inspect VERY carefully before taking tags off.",
-      "target_text": "Wig elastic sewn backwards",
-      "generated_summary": "Uncomfortable elastic band in cab"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I got this specifically to make coconut milk with and was shocked to find out that you need to use ½ cup of powder (6.5 scoops) for 1 cup of coconut milk. In all fairness, it is clearly indicated in the instructions, but I am used to other comparable products that only require 2 tablespoons. The bag is only 40 grams, so it only made a few drinks. I tried lowering the level of powder used, but then it lost all flavor. I tried adding a scoop to coffee and couldn’t distinguish the flavor at all. Overall, I feel it is a bit pricey for what it is.",
+      "target_text": "Too much powder needed per serving",
+      "generated_summary": "Powder used for coconut milk"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Very poor quality. Lapm does not dry the polish. Polish doesn't last",
-      "target_text": "Lamp fails to dry polish",
-      "generated_summary": "Poor polish quality"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Bought these 3 for the price of 1. Just incase it breaks or I find another washing machine that needs to be fixed as well. --UPDATE October 29, 2021-- 1st set broke just four months later, on the second one now. The build quality on these are not that good. The keyhole was completely stripped out. I wish I still had my originals, the only problem was the rubber insulators was broken, none of the keyholes were damaged and those had probably been on there since it was new.",
+      "target_text": "Keyhole stripped after four months",
+      "generated_summary": "Keyhole stripped out, broken"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I didn't order right color and clumps on scalp.",
-      "target_text": "Product clumps on scalp",
-      "generated_summary": "Wrong color and clumps on scalp"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I wanted to like because of the price i paid, but it is too harsh to cut the beard. Compares to reddington brand, for example, I won't be able to use it. Returning.",
+      "target_text": "Too harsh to cut beard",
+      "generated_summary": "Too harsh to cut beard"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: It is so CHEAP! It looks and feels like a kids toy! There is no weight to it. The plastic edges are jagged. Our daughter had a toy flat iron when she was 5yrs old. This is the same quality! Only we assume this one heats up. We don't know. Because we are immediately sending it right back! Also they shipped it in an envelope instead of a box. NOT SMART! NOT PROFESSIONAL!",
+      "target_text": "Low quality flat iron bad packaging",
+      "generated_summary": "No weight, plastic edges jagged"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This was entirely too small you could hardly even notice it when wearing",
+      "target_text": "Product entirely too small",
+      "generated_summary": "Too small too small"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I have used this product for the past 3 years in my Peerless 3 section boiler. This is the 4th year I am adding the product according to directions. I use the full bottle. As my photos show, the inside of a Honeywell zone valve and a Taco 007 pump are coated with a black film. I was under the impression this product kept the system clean and lubricated. The little water I drained out of the system when changing the pump and zone valve did not look dirty. Slightly brown. I don't think this is a good boiler cleaner. But I do like the idea of a silicone lubricant kept in the system throughout the year. I have no way of telling how bad the pump and valve would have looked if I had not used the product, or had I used a different product.",
+      "target_text": "Leaves black film on boiler parts",
+      "generated_summary": "Water drained out boiler system"
     },
     {
       "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I hear so much about this. But the cream was chalky and it had a weird smell. Are they selling refunds?",
       "target_text": "Cream is chalky with weird smell",
-      "generated_summary": "Cream smells weird and has weird smell"
+      "generated_summary": "Cream has a weird smell"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Very thin and cheaply made.",
-      "target_text": "Very thin and cheaply made",
-      "generated_summary": "Thin and cheaply made"
-    },
-    {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not enough illumination. Mirror flimsy. My mirror came with a very deep scratch.",
-      "target_text": "Scratched mirror with insufficient light",
-      "generated_summary": "Fails to scratch mirror"
-    },
-    {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This broke within 1 week of use. The metal part for the eyebrow brush simply snapped off.",
-      "target_text": "Eyebrow brush metal part snapped",
-      "generated_summary": "Broken metal part of eyebrow brush"
-    },
-    {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Poor quality material, would not recommend.",
-      "target_text": "Poor quality product material",
-      "generated_summary": "Poor quality material"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not the best hair. Shorter than what I expected",
+      "target_text": "Hair shorter than expected",
+      "generated_summary": "Not the best hair"
     }
   ],
   "test": [
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: when I applied a little pressure the wheel stopped spinning. Not enough power.",
-      "target_text": "Wheel stops under light pressure",
-      "generated_summary": "Wheel stopped spinning when applied"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Fit weird & tight, not cute. Returned.",
+      "target_text": "Weird tight fit, returned",
+      "generated_summary": "Fits weird tight, not cute"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I used these as suggested by a blogger I follow, and when they didn’t apply makeup the way I expected, I tried a few more techniques. I was extremely unhappy with the results of all attempts. There was a film over the silicone with a loose ridge all around, which made applying makeup even more frustrating. If I didn’t find returning these th8ngs so skeevy, I would certainly be sending them back.",
-      "target_text": "Bad film and ridge on silicone",
-      "generated_summary": "Fails to apply makeup, film"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I was expecting a poster size of each one so that I could hang in my classroom. I was very disappointed at the small size. My fault for assuming they were poster size.",
+      "target_text": "Product smaller than expected",
+      "generated_summary": "One poster size is too small"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not for me too hard to use",
-      "target_text": "Too hard to use",
-      "generated_summary": "Product is too hard to use"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: sprayers do not work, very long tube",
+      "target_text": "Broken sprayers, overlong tube",
+      "generated_summary": "Sprayers do not work, long tube"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This is blatantly plastic landfill. This won't protect anyone and is a waste of money.",
-      "target_text": "Won't protect, waste of money",
-      "generated_summary": "Plastic landfill is blatantly plastic"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not small enough Shape is not good or cute",
+      "target_text": "Wrong shape not small enough",
+      "generated_summary": "Shape not good or cute"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not as good as quality wipes like pampers These are smaller and dryer",
-      "target_text": "Smaller and drier than quality wipes",
-      "generated_summary": "Not as good as other products"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This is great to have, BUT the handle was defective from the very beginning. One end did not engage; other end wouldn't disengage. Poor factory quality control.",
+      "target_text": "Defective handle from start",
+      "generated_summary": "Handle failed to engage"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Every single one of the bottles is inoperable one year after the purchase. What a waste of money and plastic. More to toss into the massive junk heap that is our world these days.",
-      "target_text": "All bottles inoperable after one year",
-      "generated_summary": "Inoperable bottle one year after purchase"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Doesn't lay flat. Doesn't stay in place",
+      "target_text": "Won't lay flat or stay in place",
+      "generated_summary": "Doesn't lay flat"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: The caps do not stay on the pencils at all!!! Its extremely frustrating and its ruining the tips of the pencils causing the need to sharpen and waste. Eh.",
-      "target_text": "Caps fall off, ruin pencil tips",
-      "generated_summary": "Cannot stay on pencils"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: These are junk. They literally fell apart and no way to return after 30 days. Fell apart in less than 60 days.",
+      "target_text": "Fell apart, can't return",
+      "generated_summary": "Wrong way to return after 30 days"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Didn’t seem to do anything. I tried it many times.",
-      "target_text": "Product does not work",
-      "generated_summary": "Product didn't work as advertised"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Sort of big and bulky and not what I was looking for. As other reviewers reported, the buckle on the shoulder strap is uncomfortable--it hits right at the underarm area and hurts even when a t shirt is worn under it. I do have to say it provided good support and did relieve my mid to lower back pain when I tried it on. I'll be returning this as I've found another brace that does the same job with no shoulder restraints.",
+      "target_text": "Uncomfortable buckle and too bulky",
+      "generated_summary": "Brace hits underarm area"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: it arrived that it was not even working. Too hard to open the clip, I broke my nail doing it. Details quality and materials were looking poorly. Returned it to the vendor right away, it's a very cheap watch and it's not worth the cost.",
-      "target_text": "Broken nail opening watch clip",
-      "generated_summary": "Watch arrived not working"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Couldn't even try it on all the way. The sleeves are TINY! There's no way a woman my size has arms that small. I passed it to a friend who had the same problem. By that point I'd procrastinated too long to return it, so I gave it to my daughter to use the fabric for doll clothes.",
+      "target_text": "Sleeves are extremely tiny",
+      "generated_summary": "Sleeves are TINY"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Dress description says cotton. It is not cotton, what it is is some kind of synthetic fabric that feels like what swim wear is made of. Not happy.",
-      "target_text": "Dress not cotton as described",
-      "generated_summary": "Not cotton, synthetic fabric"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Almost 2/3 had holes & the elastic was torn or unraveled. Would not recommend or repurchase. Better quality from a plastic bag",
+      "target_text": "Items have holes and torn elastic",
+      "generated_summary": "Elastic torn or unraveled"
     }
   ]
 }

@@ -19,35 +19,39 @@
     "teacher_label_type": "ark_generated_pseudo_title"
   },
   "dataset_sizes": {
-    "train": 241,
-    "validation": 39,
-    "test": 25
+    "train": 214,
+    "validation": 30,
+    "test": 61
   },
   "train": {
-    "train_runtime": 70.3201,
-    "train_samples_per_second": 17.136,
-    "train_steps_per_second": 4.337,
-    "total_flos": 50587631996928.0,
-    "train_loss": 1.7941877208772252,
+    "train_runtime": 59.6955,
+    "train_samples_per_second": 17.924,
+    "train_steps_per_second": 4.523,
+    "total_flos": 45198259630080.0,
+    "train_loss": 1.8575903115449128,
     "epoch": 5.0
   },
   "validation_trainer": {
-    "eval_loss": 2.3210225105285645,
-    "eval_runtime": 0.4163,
-    "eval_samples_per_second": 93.681,
-    "eval_steps_per_second": 12.01,
+    "eval_loss": 2.207857131958008,
+    "eval_runtime": 0.3381,
+    "eval_samples_per_second": 88.729,
+    "eval_steps_per_second": 11.831,
     "epoch": 5.0
   },
   "validation": {
-    "exact_match": 0.02564102564102564,
-    "avg_unigram_f1": 0.3486406755637525,
-    "avg_generated_words": 4.82051282051282,
-    "avg_reference_words": 4.769230769230769
+    "avg_unigram_f1": 0.43254097754097753,
+    "rouge1_f1": 0.43254097754097753,
+    "rouge2_f1": 0.25146224146224144,
+    "rougeL_f1": 0.42420764420764423,
+    "avg_generated_words": 4.666666666666667,
+    "avg_reference_words": 5.0
   },
   "test": {
-    "exact_match": 0.0,
-    "avg_unigram_f1": 0.21436363636363637,
-    "avg_generated_words": 5.12,
-    "avg_reference_words": 5.16
+    "avg_unigram_f1": 0.3531495826577794,
+    "rouge1_f1": 0.3531495826577794,
+    "rouge2_f1": 0.1649161403259764,
+    "rougeL_f1": 0.333709277971573,
+    "avg_generated_words": 4.836065573770492,
+    "avg_reference_words": 4.819672131147541
   }
 }

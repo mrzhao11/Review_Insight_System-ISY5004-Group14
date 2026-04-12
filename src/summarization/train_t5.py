@@ -166,14 +166,27 @@ def normalize_text(text: str) -> str:
     return text
 
 
+def metric_tokens(text: str) -> List[str]:
+    """Tokenize text for title-overlap metrics."""
+    return re.findall(r"[a-z0-9']+", normalize_text(text))
+
+
+def f1_from_counts(overlap: int, prediction_count: int, reference_count: int) -> float:
+    """Compute F1 from overlap and candidate/reference lengths."""
+    if prediction_count == 0 and reference_count == 0:
+        return 1.0
+    if prediction_count == 0 or reference_count == 0 or overlap == 0:
+        return 0.0
+
+    precision = overlap / prediction_count
+    recall = overlap / reference_count
+    return 2 * precision * recall / (precision + recall)
+
+
 def unigram_f1(prediction: str, reference: str) -> float:
     """Compute a lightweight unigram F1 score."""
-    pred_tokens = normalize_text(prediction).split()
-    ref_tokens = normalize_text(reference).split()
-    if not pred_tokens and not ref_tokens:
-        return 1.0
-    if not pred_tokens or not ref_tokens:
-        return 0.0
+    pred_tokens = metric_tokens(prediction)
+    ref_tokens = metric_tokens(reference)
 
     pred_counts: Dict[str, int] = {}
     ref_counts: Dict[str, int] = {}
@@ -186,11 +199,55 @@ def unigram_f1(prediction: str, reference: str) -> float:
     for token, count in pred_counts.items():
         overlap += min(count, ref_counts.get(token, 0))
 
-    precision = overlap / len(pred_tokens)
-    recall = overlap / len(ref_tokens)
-    if precision + recall == 0:
-        return 0.0
-    return 2 * precision * recall / (precision + recall)
+    return f1_from_counts(overlap, len(pred_tokens), len(ref_tokens))
+
+
+def ngram_counts(tokens: List[str], n: int) -> Dict[tuple[str, ...], int]:
+    """Count n-grams for ROUGE-N."""
+    counts: Dict[tuple[str, ...], int] = {}
+    if n <= 0 or len(tokens) < n:
+        return counts
+
+    for index in range(len(tokens) - n + 1):
+        ngram = tuple(tokens[index : index + n])
+        counts[ngram] = counts.get(ngram, 0) + 1
+    return counts
+
+
+def rouge_n_f1(prediction: str, reference: str, n: int) -> float:
+    """Compute ROUGE-N F1 for short generated titles."""
+    pred_counts = ngram_counts(metric_tokens(prediction), n)
+    ref_counts = ngram_counts(metric_tokens(reference), n)
+    overlap = sum(
+        min(count, ref_counts.get(ngram, 0))
+        for ngram, count in pred_counts.items()
+    )
+    return f1_from_counts(overlap, sum(pred_counts.values()), sum(ref_counts.values()))
+
+
+def lcs_length(left: List[str], right: List[str]) -> int:
+    """Return longest common subsequence length for ROUGE-L."""
+    if not left or not right:
+        return 0
+
+    previous = [0] * (len(right) + 1)
+    for left_token in left:
+        current = [0]
+        for index, right_token in enumerate(right, start=1):
+            if left_token == right_token:
+                current.append(previous[index - 1] + 1)
+            else:
+                current.append(max(previous[index], current[-1]))
+        previous = current
+    return previous[-1]
+
+
+def rouge_l_f1(prediction: str, reference: str) -> float:
+    """Compute ROUGE-L F1 for short generated titles."""
+    pred_tokens = metric_tokens(prediction)
+    ref_tokens = metric_tokens(reference)
+    overlap = lcs_length(pred_tokens, ref_tokens)
+    return f1_from_counts(overlap, len(pred_tokens), len(ref_tokens))
 
 
 def generate_batch(
@@ -255,8 +312,10 @@ def evaluate_pairs(
             )
         )
 
-    exact_matches = []
     f1_scores = []
+    rouge1_scores = []
+    rouge2_scores = []
+    rouge_l_scores = []
     generated_lengths = []
     reference_lengths = []
     samples: List[Dict[str, str]] = []
@@ -265,10 +324,10 @@ def evaluate_pairs(
         reference = pair["target_text"]
         normalized_prediction = normalize_text(prediction)
         normalized_reference = normalize_text(reference)
-        exact_matches.append(
-            1.0 if normalized_prediction == normalized_reference else 0.0
-        )
         f1_scores.append(unigram_f1(prediction, reference))
+        rouge1_scores.append(rouge_n_f1(prediction, reference, 1))
+        rouge2_scores.append(rouge_n_f1(prediction, reference, 2))
+        rouge_l_scores.append(rouge_l_f1(prediction, reference))
         generated_lengths.append(len(normalized_prediction.split()))
         reference_lengths.append(len(normalized_reference.split()))
 
@@ -282,8 +341,10 @@ def evaluate_pairs(
             )
 
     metrics = {
-        "exact_match": float(np.mean(exact_matches)) if exact_matches else 0.0,
         "avg_unigram_f1": float(np.mean(f1_scores)) if f1_scores else 0.0,
+        "rouge1_f1": float(np.mean(rouge1_scores)) if rouge1_scores else 0.0,
+        "rouge2_f1": float(np.mean(rouge2_scores)) if rouge2_scores else 0.0,
+        "rougeL_f1": float(np.mean(rouge_l_scores)) if rouge_l_scores else 0.0,
         "avg_generated_words": (
             float(np.mean(generated_lengths)) if generated_lengths else 0.0
         ),

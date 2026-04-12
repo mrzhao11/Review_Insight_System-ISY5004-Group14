@@ -83,7 +83,7 @@ Current split sizes:
 | --- | ---: | ---: | ---: |
 | Review value | 3,200 | 400 | 400 |
 | Calibrated sentiment | 964 | 319 | 329 |
-| Ark pseudo complaint titles | 241 | 39 | 25 |
+| Ark pseudo complaint titles | 214 | 30 | 61 |
 
 Current overview counts:
 
@@ -101,7 +101,9 @@ Current overview counts:
 | --- | ---: | --- |
 | Review value classification | Accuracy 0.840 | Positive-class F1 is about 0.418, so high-value review detection is still the weak point. |
 | BERT sentiment classification | F1 0.990 | Strong on the calibrated labels, but the labels are rule-derived. |
-| T5 complaint title generation | Avg unigram F1 0.214 | Fine-tuned on Ark-generated pseudo titles; zero-shot baseline was 0.086. |
+| T5 complaint title generation | ROUGE-L F1 0.334 | Fine-tuned on Ark-generated pseudo titles; zero-shot ROUGE-L F1 on the same expanded test split is 0.146. |
+
+Current complaint-title metrics use an expanded 61-row test split. Exact-match is intentionally not reported because short complaint titles can have multiple valid phrasings.
 
 ## Setup
 
@@ -177,6 +179,14 @@ Generate complaint-title pseudo labels as preprocessing:
 
 This command requires `ARK_API_KEY`. It writes `data/processed/pseudo_summary_train.csv`, `data/processed/pseudo_summary_validation.csv`, `data/processed/pseudo_summary_test.csv`, and `data/processed/pseudo_summary_manifest.json`. Use `--limit 2` for a cheap smoke test before running the full 305 negative reviews.
 
+Re-split the generated complaint titles to keep a larger test set:
+
+```bash
+.venv/bin/python -m src.preprocessing.resplit_complaint_titles
+```
+
+The default re-split is 70% train, 10% validation, and 20% test, producing 214/30/61 rows from the 305 generated pseudo-title pairs.
+
 Train the review-value classifier:
 
 ```bash
@@ -200,7 +210,12 @@ If `google/flan-t5-small` is already cached locally, `--allow-download` can be o
 Evaluate the zero-shot T5 complaint-title baseline:
 
 ```bash
-.venv/bin/python -m src.summarization.train_t5 --allow-download
+.venv/bin/python -m src.summarization.train_t5 \
+  --train-file data/processed/pseudo_summary_train.csv \
+  --validation-file data/processed/pseudo_summary_validation.csv \
+  --test-file data/processed/pseudo_summary_test.csv \
+  --target-column llm_complaint_title \
+  --allow-download
 ```
 
 If `google/flan-t5-small` is already cached locally, `--allow-download` can be omitted.

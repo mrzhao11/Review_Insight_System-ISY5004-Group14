@@ -39,5 +39,19 @@
     "train": "data/processed/pseudo_summary_train.csv",
     "validation": "data/processed/pseudo_summary_validation.csv",
     "test": "data/processed/pseudo_summary_test.csv"
+  },
+  "resplit": {
+    "strategy": "deterministic_shuffle",
+    "seed": 42,
+    "train_ratio": 0.7,
+    "validation_ratio": 0.1,
+    "test_ratio": 0.2,
+    "rows_before_dedup": 305,
+    "rows_after_dedup": 305,
+    "split_counts": {
+      "train": 214,
+      "validation": 30,
+      "test": 61
+    }
   }
 }
