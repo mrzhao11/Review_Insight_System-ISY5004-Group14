@@ -1,0 +1,43 @@
+{
+  "config": {
+    "model": "doubao-seed-2-0-lite-260215",
+    "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+    "text_column": "clean_review_text",
+    "original_title_column": "clean_review_title",
+    "sentiment_column": "sentiment_label",
+    "negative_label": "negative",
+    "batch_size": 8,
+    "limit": null,
+    "quality_rules": {
+      "target_words": "3 to 8 preferred; 2 to 10 accepted after cleanup",
+      "rejects_star_rating_titles": true,
+      "rejects_generic_titles": true,
+      "fallback": "short clause extracted from the review text"
+    }
+  },
+  "splits": {
+    "train": {
+      "input_rows": 241,
+      "ark_titles": 241,
+      "fallback_titles": 0,
+      "failed_batches": 0
+    },
+    "validation": {
+      "input_rows": 39,
+      "ark_titles": 39,
+      "fallback_titles": 0,
+      "failed_batches": 0
+    },
+    "test": {
+      "input_rows": 25,
+      "ark_titles": 25,
+      "fallback_titles": 0,
+      "failed_batches": 0
+    }
+  },
+  "files": {
+    "train": "data/processed/pseudo_summary_train.csv",
+    "validation": "data/processed/pseudo_summary_validation.csv",
+    "test": "data/processed/pseudo_summary_test.csv"
+  }
+}

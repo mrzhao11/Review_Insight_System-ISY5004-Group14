@@ -21,6 +21,11 @@ from transformers import (
     T5Tokenizer,
 )
 
+try:
+    from openai import OpenAI
+except ImportError:  # pragma: no cover - optional runtime fallback
+    OpenAI = None
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -40,6 +45,7 @@ from src.visualization.dashboard_utils import (
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 BERT_MODEL_DIR = MODELS_DIR / "bert_sentiment"
+SUMMARY_STUDENT_DIR = MODELS_DIR / "t5_pseudo_summary"
 SUMMARY_MODEL_NAME = "google/flan-t5-small"
 DEMO_SPLIT = "test"
 UPLOAD_REQUIRED_COLUMNS = ("review_text",)
@@ -53,6 +59,7 @@ UPLOAD_OPTIONAL_COLUMNS = (
     "verified_purchase",
 )
 UPLOAD_ANALYSIS_LIMIT = 50
+ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
 ARK_DEMO_MODEL = "doubao-seed-2-0-lite-260215"
 CATEGORY_DISPLAY_NAMES = {
     "All": "All Categories",
@@ -203,11 +210,34 @@ def load_payload() -> dict[str, Any]:
 @st.cache_data(show_spinner=False)
 def load_metrics() -> dict[str, Any]:
     """Load saved model metrics for dashboard display."""
+    zero_shot_metrics = json.loads((MODELS_DIR / "t5_summary_metrics.json").read_text())
+    zero_shot_samples = json.loads((MODELS_DIR / "t5_summary_samples.json").read_text())
+    pseudo_metrics_path = MODELS_DIR / "t5_pseudo_summary_metrics.json"
+    pseudo_samples_path = MODELS_DIR / "t5_pseudo_summary_samples.json"
+
+    if pseudo_metrics_path.exists() and pseudo_samples_path.exists():
+        summary_metrics = json.loads(pseudo_metrics_path.read_text())
+        summary_samples = json.loads(pseudo_samples_path.read_text())
+        summary_display_name = "Pseudo-label T5 student"
+        summary_display_delta = (
+            f"test unigram F1 {summary_metrics['test']['avg_unigram_f1']:.3f}"
+        )
+    else:
+        summary_metrics = zero_shot_metrics
+        summary_samples = zero_shot_samples
+        summary_display_name = "Zero-shot T5"
+        summary_display_delta = (
+            f"test unigram F1 {zero_shot_metrics['test']['avg_unigram_f1']:.3f}"
+        )
+
     return {
         "review_value": json.loads((MODELS_DIR / "review_value_metrics.json").read_text()),
         "sentiment": json.loads((MODELS_DIR / "bert_sentiment_metrics.json").read_text()),
-        "summary": json.loads((MODELS_DIR / "t5_summary_metrics.json").read_text()),
-        "summary_samples": json.loads((MODELS_DIR / "t5_summary_samples.json").read_text()),
+        "summary": summary_metrics,
+        "summary_samples": summary_samples,
+        "summary_display_name": summary_display_name,
+        "summary_display_delta": summary_display_delta,
+        "zero_shot_summary": zero_shot_metrics,
     }
 
 
@@ -230,14 +260,88 @@ def load_sentiment_bundle() -> tuple[BertTokenizer, BertForSequenceClassificatio
 
 
 @st.cache_resource(show_spinner=False)
-def load_summary_bundle() -> tuple[T5Tokenizer, T5ForConditionalGeneration, torch.device]:
-    """Load the cached zero-shot Flan-T5 checkpoint used for demo summarization."""
-    tokenizer = T5Tokenizer.from_pretrained(SUMMARY_MODEL_NAME, local_files_only=True)
-    model = T5ForConditionalGeneration.from_pretrained(SUMMARY_MODEL_NAME, local_files_only=True)
+def load_t5_summary_bundle(
+    model_source: str,
+) -> tuple[T5Tokenizer, T5ForConditionalGeneration, torch.device]:
+    """Load a local or cached T5 complaint-title model."""
+    resolved_source: Path | str = (
+        Path(model_source) if Path(model_source).exists() else model_source
+    )
+    tokenizer = T5Tokenizer.from_pretrained(resolved_source, local_files_only=True)
+    model = T5ForConditionalGeneration.from_pretrained(
+        resolved_source,
+        local_files_only=True,
+    )
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     model.to(device)
     model.eval()
     return tokenizer, model, device
+
+
+def has_summary_student() -> bool:
+    """Return whether the pseudo-label T5 student is available locally."""
+    return (SUMMARY_STUDENT_DIR / "config.json").exists()
+
+
+def generate_title_with_t5(text: str, *, model_source: str) -> str:
+    """Generate a complaint title with a specific T5 model source."""
+    tokenizer, model, device = load_t5_summary_bundle(model_source)
+    prompt = (
+        "Write a short complaint title for this customer review. "
+        "Keep it concise and focused on the main problem.\n\n"
+        f"Review: {text.strip()}"
+    )
+    encoded = tokenizer(
+        prompt,
+        return_tensors="pt",
+        truncation=True,
+        max_length=256,
+    )
+    encoded = {key: value.to(device) for key, value in encoded.items()}
+    with torch.no_grad():
+        output = model.generate(
+            **encoded,
+            max_length=24,
+            num_beams=4,
+            early_stopping=True,
+            no_repeat_ngram_size=2,
+        )
+    return tokenizer.decode(output[0], skip_special_tokens=True).strip()
+
+
+def generate_title_with_ark(text: str) -> str | None:
+    """Generate a complaint title with Ark when the local student is unavailable."""
+    api_key = os.getenv("ARK_API_KEY")
+    model_name = os.getenv("ARK_MODEL", ARK_DEMO_MODEL)
+    base_url = os.getenv("ARK_BASE_URL", ARK_BASE_URL)
+    if not api_key or not model_name or OpenAI is None:
+        return None
+
+    prompt = (
+        "Write one short English complaint title for this negative e-commerce review.\n"
+        "Rules:\n"
+        "- Use 3 to 8 words.\n"
+        "- Focus on the concrete product or service problem.\n"
+        "- Use only facts stated in the review.\n"
+        "- Do not mention star ratings.\n"
+        "- Return only the title text.\n\n"
+        f"Review: {text.strip()}"
+    )
+
+    try:
+        client = OpenAI(
+            base_url=base_url,
+            api_key=api_key,
+            timeout=30.0,
+        )
+        response = client.responses.create(
+            model=model_name,
+            input=prompt,
+            extra_body={"thinking": {"type": "disabled"}},
+        )
+        return (response.output_text or "").strip() or None
+    except Exception:
+        return None
 
 
 def predict_review_value(text: str) -> dict[str, float]:
@@ -278,34 +382,30 @@ def predict_sentiment(text: str) -> dict[str, float | str]:
 
 
 def summarize_issue(text: str) -> str:
-    """Generate a short complaint title with the pretrained T5 model."""
-    tokenizer, model, device = load_summary_bundle()
-    prompt = (
-        "Write a short complaint title for this customer review. "
-        "Keep it concise and focused on the main problem.\n\n"
-        f"Review: {text.strip()}"
-    )
-    encoded = tokenizer(
-        prompt,
-        return_tensors="pt",
-        truncation=True,
-        max_length=256,
-    )
-    encoded = {key: value.to(device) for key, value in encoded.items()}
-    with torch.no_grad():
-        output = model.generate(
-            **encoded,
-            max_length=24,
-            num_beams=4,
-            early_stopping=True,
-            no_repeat_ngram_size=2,
-        )
-    generated = tokenizer.decode(output[0], skip_special_tokens=True).strip()
-    return postprocess_summary(generated, text)
+    """Generate a complaint title with student, Ark, zero-shot T5, then rules."""
+    if has_summary_student():
+        try:
+            generated = generate_title_with_t5(
+                text,
+                model_source=str(SUMMARY_STUDENT_DIR),
+            )
+            return postprocess_summary(generated, text)
+        except Exception:
+            pass
+
+    ark_title = generate_title_with_ark(text)
+    if ark_title:
+        return postprocess_summary(ark_title, text)
+
+    try:
+        generated = generate_title_with_t5(text, model_source=SUMMARY_MODEL_NAME)
+        return postprocess_summary(generated, text)
+    except Exception:
+        return build_fallback_title(text)
 
 
 def build_fallback_title(text: str) -> str:
-    """Create a compact fallback issue title when zero-shot output is noisy."""
+    """Create a compact fallback issue title when generated output is noisy."""
     normalized = clean_text(text)
     clauses = re.split(r"[.!?;]| but | and | because | while | although ", normalized, maxsplit=4)
     negative_cues = (
@@ -347,14 +447,53 @@ def build_fallback_title(text: str) -> str:
 
 
 def postprocess_summary(summary: str, source_text: str) -> str:
-    """Stabilize zero-shot titles for demo-friendly display."""
+    """Stabilize generated titles for demo-friendly display."""
     cleaned_summary = clean_text(summary)
     lowered = cleaned_summary.lower()
+    source_lowered = source_text.lower()
     invalid_markers = ("warning:", "graphic content", "customer review", "review:")
+    source_negation_patterns = (
+        r"\bnot\b",
+        r"\bnever\b",
+        r"\bno\b",
+        r"n't\b",
+        r"\bcannot\b",
+        r"\bcan't\b",
+        r"\bwon't\b",
+    )
+    problem_signal_patterns = (
+        *source_negation_patterns,
+        r"\bfail\w*\b",
+        r"\bbroke\b",
+        r"\bbroken\b",
+        r"\bstopped\b",
+        r"\bwaste\b",
+        r"\bpoor\b",
+        r"\bcheap\b",
+        r"\bwrong\b",
+        r"\bissue\b",
+        r"\bproblem\b",
+        r"\btoo\b",
+        r"\bloose\b",
+        r"\bscratch\w*\b",
+        r"\bcrack\w*\b",
+        r"\bfall\w*\b",
+        r"\bmissing\b",
+        r"\binoperable\b",
+        r"\bhard\b",
+        r"\bdifficult\b",
+    )
+    source_has_negation = any(
+        re.search(pattern, source_lowered) for pattern in source_negation_patterns
+    )
+    summary_has_problem_signal = any(
+        re.search(pattern, lowered) for pattern in problem_signal_patterns
+    )
     if (
         not cleaned_summary
         or any(marker in lowered for marker in invalid_markers)
         or len(cleaned_summary.split()) > 10
+        or (source_has_negation and not summary_has_problem_signal)
     ):
         return build_fallback_title(source_text)
     return cleaned_summary
@@ -887,8 +1026,8 @@ def main() -> None:
         )
         result_col3.metric(
             "Complaint Title Mode",
-            "Zero-shot T5",
-            "sample-based showcase",
+            metrics["summary_display_name"],
+            metrics["summary_display_delta"],
         )
 
         metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)

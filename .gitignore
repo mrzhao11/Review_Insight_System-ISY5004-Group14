@@ -27,6 +27,7 @@ temp/
 # Large model directories. Keep top-level metrics and small sklearn bundle in models/.
 models/bert_sentiment/
 models/t5_summary/
+models/t5_pseudo_summary/
 models/**/checkpoint-*/
 *.safetensors
 *.pt

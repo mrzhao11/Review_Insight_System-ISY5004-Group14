@@ -1,0 +1,53 @@
+{
+  "config": {
+    "train_file": "data/processed/pseudo_summary_train.csv",
+    "validation_file": "data/processed/pseudo_summary_validation.csv",
+    "test_file": "data/processed/pseudo_summary_test.csv",
+    "text_column": "clean_review_text",
+    "target_column": "llm_complaint_title",
+    "model_name": "google/flan-t5-small",
+    "output_dir": "models/t5_pseudo_summary",
+    "input_max_length": 256,
+    "target_max_length": 24,
+    "num_train_epochs": 5.0,
+    "train_batch_size": 4,
+    "eval_batch_size": 8,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.01,
+    "allow_download": false,
+    "fine_tuned": true,
+    "teacher_label_type": "ark_generated_pseudo_title"
+  },
+  "dataset_sizes": {
+    "train": 241,
+    "validation": 39,
+    "test": 25
+  },
+  "train": {
+    "train_runtime": 70.3201,
+    "train_samples_per_second": 17.136,
+    "train_steps_per_second": 4.337,
+    "total_flos": 50587631996928.0,
+    "train_loss": 1.7941877208772252,
+    "epoch": 5.0
+  },
+  "validation_trainer": {
+    "eval_loss": 2.3210225105285645,
+    "eval_runtime": 0.4163,
+    "eval_samples_per_second": 93.681,
+    "eval_steps_per_second": 12.01,
+    "epoch": 5.0
+  },
+  "validation": {
+    "exact_match": 0.02564102564102564,
+    "avg_unigram_f1": 0.3486406755637525,
+    "avg_generated_words": 4.82051282051282,
+    "avg_reference_words": 4.769230769230769
+  },
+  "test": {
+    "exact_match": 0.0,
+    "avg_unigram_f1": 0.21436363636363637,
+    "avg_generated_words": 5.12,
+    "avg_reference_words": 5.16
+  }
+}
