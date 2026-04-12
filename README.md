@@ -21,7 +21,8 @@ The project uses Amazon Reviews 2023 data and focuses on three modeling tasks:
 3. Complaint title generation
    - Goal: generate a short title for negative reviews.
    - Preprocessing step: Volcengine Ark generates normalized pseudo complaint titles for calibrated negative reviews.
-   - Student model: fine-tuned `google/flan-t5-small`, saved locally in `models/t5_pseudo_summary/`.
+   - Student models: fine-tuned `google/flan-t5-small` and `google/flan-t5-base`, saved locally in `models/t5_pseudo_summary_small/` and `models/t5_pseudo_summary_base/`.
+   - Main reporting metrics: ROUGE-1/2/L F1 and BERTScore F1.
    - Runtime fallback: local student first, Ark direct generation second, zero-shot T5 or a local heuristic last.
 
 The Streamlit app combines these pieces into an interactive dashboard with category filters, representative negative reviews, live single-review analysis, and a simple merchant assistant.
@@ -51,9 +52,13 @@ models/
   review_value_metrics.json        # Review-value metrics
   bert_sentiment/                  # Fine-tuned BERT model
   bert_sentiment_metrics.json      # BERT metrics
-  t5_pseudo_summary/               # T5 student fine-tuned on Ark pseudo titles
-  t5_pseudo_summary_metrics.json   # Pseudo-label T5 student metrics
-  t5_pseudo_summary_samples.json   # Example pseudo-label T5 generations
+  t5_pseudo_summary/               # Runtime student model used by Streamlit
+  t5_pseudo_summary_small/         # Flan-T5-small comparison run
+  t5_pseudo_summary_base/          # Flan-T5-base comparison run
+  t5_pseudo_summary_small_metrics.json
+  t5_pseudo_summary_base_metrics.json
+  t5_pseudo_summary_small_samples.json
+  t5_pseudo_summary_base_samples.json
   t5_summary_metrics.json          # Zero-shot T5 metrics
   t5_summary_samples.json          # Example zero-shot generated titles
   t5_summary/                      # Legacy T5 experiment output
@@ -81,19 +86,19 @@ Current split sizes:
 
 | Dataset | Train | Validation | Test |
 | --- | ---: | ---: | ---: |
-| Review value | 3,200 | 400 | 400 |
-| Calibrated sentiment | 964 | 319 | 329 |
-| Ark pseudo complaint titles | 214 | 30 | 61 |
+| Review value | 8,000 | 1,000 | 1,000 |
+| Calibrated sentiment | 3,820 | 856 | 836 |
+| Ark pseudo complaint titles | 833 | 118 | 237 |
 
 Current overview counts:
 
 | Metric | Count |
 | --- | ---: |
-| Total processed reviews | 4,000 |
-| High-value reviews | 600 |
-| Calibrated negative reviews | 305 |
-| High-value negative reviews | 47 |
-| Ark pseudo complaint-title pairs | 305 |
+| Total processed reviews | 10,000 |
+| High-value reviews | 1,250 |
+| Calibrated negative reviews | 1,188 |
+| High-value negative reviews | 154 |
+| Ark pseudo complaint-title pairs | 1,188 |
 
 ## Current Model Results
 
@@ -101,9 +106,10 @@ Current overview counts:
 | --- | ---: | --- |
 | Review value classification | Accuracy 0.840 | Positive-class F1 is about 0.418, so high-value review detection is still the weak point. |
 | BERT sentiment classification | F1 0.990 | Strong on the calibrated labels, but the labels are rule-derived. |
-| T5 complaint title generation | ROUGE-L F1 0.334 | Fine-tuned on Ark-generated pseudo titles; zero-shot ROUGE-L F1 on the same expanded test split is 0.146. |
+| T5 complaint title generation (Flan-T5-small) | ROUGE-L F1 0.373, BERTScore F1 0.834 | Fine-tuned on 833/118/237 Ark pseudo-title split. |
+| T5 complaint title generation (Flan-T5-base) | ROUGE-L F1 0.412, BERTScore F1 0.845 | Re-run on the same split; currently the best title model. |
 
-Current complaint-title metrics use an expanded 61-row test split. Exact-match is intentionally not reported because short complaint titles can have multiple valid phrasings.
+Current complaint-title metrics use an expanded 237-row test split. Exact-match is intentionally not reported because short complaint titles can have multiple valid phrasings.
 
 ## Setup
 
@@ -154,13 +160,17 @@ The dashboard expects the processed CSV files and saved model outputs in `data/p
 
 Run commands from the project root.
 
+Data-alignment rule for this project: complaint-title expansion must stay inside the
+currently sampled `review_value_*.csv` universe. Do not add reviews from unseen
+products/categories when rebuilding pseudo-title data.
+
 Build the review-value dataset:
 
 ```bash
 .venv/bin/python -m src.helpfulness.prepare_helpfulness_dataset \
   --categories All_Beauty Amazon_Fashion Appliances Handmade_Products Health_and_Personal_Care \
-  --samples-per-category 800 \
-  --min-helpful-per-category 120 \
+  --samples-per-category 2000 \
+  --min-helpful-per-category 250 \
   --helpful-vote-threshold 2 \
   --limit 20000
 ```
@@ -168,16 +178,22 @@ Build the review-value dataset:
 Calibrate sentiment labels:
 
 ```bash
-.venv/bin/python -m src.sentiment.label_calibration
+.venv/bin/python -m src.sentiment.label_calibration \
+  --negative-rating-max 3 \
+  --negative-score-threshold 0.2
 ```
+
+This command only recalibrates labels on the existing sampled review splits, so
+product scope remains aligned with the current dataset.
 
 Generate complaint-title pseudo labels as preprocessing:
 
 ```bash
-.venv/bin/python -m src.preprocessing.generate_complaint_titles
+.venv/bin/python -m src.preprocessing.generate_complaint_titles \
+  --request-timeout 60
 ```
 
-This command requires `ARK_API_KEY`. It writes `data/processed/pseudo_summary_train.csv`, `data/processed/pseudo_summary_validation.csv`, `data/processed/pseudo_summary_test.csv`, and `data/processed/pseudo_summary_manifest.json`. Use `--limit 2` for a cheap smoke test before running the full 305 negative reviews.
+This command requires `ARK_API_KEY`. It writes `data/processed/pseudo_summary_train.csv`, `data/processed/pseudo_summary_validation.csv`, `data/processed/pseudo_summary_test.csv`, and `data/processed/pseudo_summary_manifest.json`. Use `--limit 2` for a cheap smoke test before running the full 1,188 negative-review rows.
 
 Re-split the generated complaint titles to keep a larger test set:
 
@@ -185,7 +201,7 @@ Re-split the generated complaint titles to keep a larger test set:
 .venv/bin/python -m src.preprocessing.resplit_complaint_titles
 ```
 
-The default re-split is 70% train, 10% validation, and 20% test, producing 214/30/61 rows from the 305 generated pseudo-title pairs.
+The default re-split is 70% train, 10% validation, and 20% test, producing 833/118/237 rows from the 1,188 generated pseudo-title pairs.
 
 Train the review-value classifier:
 
@@ -199,13 +215,29 @@ Fine-tune the BERT sentiment classifier:
 .venv/bin/python -m src.sentiment.train_bert_sentiment
 ```
 
-Fine-tune the T5 complaint-title student on the preprocessed Ark pseudo titles:
+Fine-tune the T5 complaint-title students on the preprocessed Ark pseudo titles:
 
 ```bash
-.venv/bin/python -m src.summarization.fine_tune_t5_pseudo --allow-download
+.venv/bin/python -m src.summarization.fine_tune_t5_pseudo \
+  --model-name google/flan-t5-small \
+  --output-dir models/t5_pseudo_summary_small \
+  --metrics-output models/t5_pseudo_summary_small_metrics.json \
+  --samples-output models/t5_pseudo_summary_small_samples.json \
+  --allow-download \
+  --bertscore-model-type distilbert-base-uncased
 ```
 
-If `google/flan-t5-small` is already cached locally, `--allow-download` can be omitted. The student model is written to `models/t5_pseudo_summary/`, with metrics and samples saved as top-level JSON files in `models/`.
+```bash
+.venv/bin/python -m src.summarization.fine_tune_t5_pseudo \
+  --model-name google/flan-t5-base \
+  --output-dir models/t5_pseudo_summary_base \
+  --metrics-output models/t5_pseudo_summary_base_metrics.json \
+  --samples-output models/t5_pseudo_summary_base_samples.json \
+  --allow-download \
+  --bertscore-model-type distilbert-base-uncased
+```
+
+If the model checkpoints are already cached locally, `--allow-download` can be omitted.
 
 Evaluate the zero-shot T5 complaint-title baseline:
 
@@ -274,4 +306,4 @@ Show me two representative negative review examples.
 - `review_value_label` is a proxy for review helpfulness based on helpful vote count. It is not a human quality label.
 - Sentiment labels are calibrated from ratings and VADER scores. The BERT score reflects performance on those rule-derived labels.
 - The T5 complaint-title student is trained on LLM-generated pseudo labels, not human-written gold complaint labels. Treat its metrics as a demo-oriented signal.
-- The local `models/` directory is large because it includes transformer model weights and checkpoints. The Git version intentionally ignores large model directories such as `models/bert_sentiment/`, `models/t5_summary/`, and `models/t5_pseudo_summary/`; keep them locally, publish them with Git LFS, or recreate them by rerunning the training/evaluation commands.
+- The local `models/` directory is large because it includes transformer model weights and checkpoints. The Git version intentionally ignores large model directories such as `models/bert_sentiment/`, `models/t5_summary/`, `models/t5_pseudo_summary/`, `models/t5_pseudo_summary_small/`, and `models/t5_pseudo_summary_base/`; keep them locally, publish them with Git LFS, or recreate them by rerunning the training/evaluation commands.
