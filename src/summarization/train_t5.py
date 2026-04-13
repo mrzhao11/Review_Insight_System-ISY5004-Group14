@@ -13,6 +13,11 @@ import numpy as np
 import torch
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 
+try:
+    from bert_score import score as bert_score_score
+except ImportError:  # pragma: no cover - optional dependency for extra metrics
+    bert_score_score = None
+
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
@@ -116,6 +121,15 @@ def parse_args() -> argparse.Namespace:
         "--allow-download",
         action="store_true",
         help="Allow downloading model files if they are not already cached locally.",
+    )
+    parser.add_argument(
+        "--bertscore-model-type",
+        type=str,
+        default="distilbert-base-uncased",
+        help=(
+            "Backbone used to compute BERTScore F1. Use an empty string to skip "
+            "BERTScore."
+        ),
     )
     return parser.parse_args()
 
@@ -294,6 +308,7 @@ def evaluate_pairs(
     batch_size: int,
     sample_count: int,
     device: torch.device,
+    bertscore_model_type: str | None = "distilbert-base-uncased",
 ) -> tuple[Dict[str, float], List[Dict[str, str]]]:
     """Run zero-shot generation and compute lightweight metrics."""
     predictions: List[str] = []
@@ -340,11 +355,32 @@ def evaluate_pairs(
                 }
             )
 
+    bertscore_f1 = None
+    model_name = (bertscore_model_type or "").strip()
+    if model_name:
+        if bert_score_score is None:
+            raise RuntimeError(
+                "BERTScore requires the bert-score package. Install dependencies first."
+            )
+        references = [pair["target_text"] for pair in pairs]
+        if references:
+            bertscore_device = "cuda" if torch.cuda.is_available() else "cpu"
+            _, _, bertscore_scores = bert_score_score(
+                predictions,
+                references,
+                lang="en",
+                model_type=model_name,
+                verbose=False,
+                device=bertscore_device,
+            )
+            bertscore_f1 = float(bertscore_scores.mean().item())
+
     metrics = {
         "avg_unigram_f1": float(np.mean(f1_scores)) if f1_scores else 0.0,
         "rouge1_f1": float(np.mean(rouge1_scores)) if rouge1_scores else 0.0,
         "rouge2_f1": float(np.mean(rouge2_scores)) if rouge2_scores else 0.0,
         "rougeL_f1": float(np.mean(rouge_l_scores)) if rouge_l_scores else 0.0,
+        "bertscore_f1": bertscore_f1,
         "avg_generated_words": (
             float(np.mean(generated_lengths)) if generated_lengths else 0.0
         ),
@@ -404,6 +440,7 @@ def run_t5_baseline(args: argparse.Namespace) -> Dict[str, Any]:
         batch_size=args.batch_size,
         sample_count=args.sample_count,
         device=device,
+        bertscore_model_type=args.bertscore_model_type,
     )
     test_metrics, test_samples = evaluate_pairs(
         test_pairs,
@@ -415,6 +452,7 @@ def run_t5_baseline(args: argparse.Namespace) -> Dict[str, Any]:
         batch_size=args.batch_size,
         sample_count=args.sample_count,
         device=device,
+        bertscore_model_type=args.bertscore_model_type,
     )
 
     metrics = {
@@ -432,6 +470,7 @@ def run_t5_baseline(args: argparse.Namespace) -> Dict[str, Any]:
             "num_beams": args.num_beams,
             "batch_size": args.batch_size,
             "allow_download": args.allow_download,
+            "bertscore_model_type": args.bertscore_model_type,
             "fine_tuned": False,
         },
         "dataset_sizes": {

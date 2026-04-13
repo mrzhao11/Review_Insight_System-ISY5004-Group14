@@ -8,8 +8,8 @@
   ],
   "config": {
     "num_categories": 5,
-    "samples_per_category": 800,
-    "min_helpful_per_category": 120,
+    "samples_per_category": 2000,
+    "min_helpful_per_category": 250,
     "helpful_vote_threshold": 2,
     "min_review_words": 5,
     "min_review_chars": 20,
@@ -21,12 +21,12 @@
     "limit": 20000
   },
   "totals": {
-    "selected_reviews": 4000,
-    "train_reviews": 3200,
-    "validation_reviews": 400,
-    "test_reviews": 400,
-    "high_value_labels": 600,
-    "low_value_labels": 3400
+    "selected_reviews": 10000,
+    "train_reviews": 8000,
+    "validation_reviews": 1000,
+    "test_reviews": 1000,
+    "high_value_labels": 1250,
+    "low_value_labels": 8750
   },
   "categories": {
     "All_Beauty": {
@@ -35,9 +35,9 @@
       "raw_records": 20000,
       "eligible_records": 17798,
       "filtered_records": 2202,
-      "high_value_labels": 120,
-      "low_value_labels": 680,
-      "product_titles_attached": 800,
+      "high_value_labels": 250,
+      "low_value_labels": 1750,
+      "product_titles_attached": 2000,
       "missing_product_titles": 0,
       "filter_reasons": {
         "too_few_words": 2184,
@@ -45,9 +45,9 @@
         "too_few_characters": 16
       },
       "split_counts": {
-        "train": 640,
-        "validation": 80,
-        "test": 80
+        "train": 1600,
+        "validation": 200,
+        "test": 200
       }
     },
     "Amazon_Fashion": {
@@ -56,9 +56,9 @@
       "raw_records": 20000,
       "eligible_records": 17814,
       "filtered_records": 2186,
-      "high_value_labels": 120,
-      "low_value_labels": 680,
-      "product_titles_attached": 800,
+      "high_value_labels": 250,
+      "low_value_labels": 1750,
+      "product_titles_attached": 2000,
       "missing_product_titles": 0,
       "filter_reasons": {
         "too_few_words": 2175,
@@ -66,9 +66,9 @@
         "empty_review_text": 3
       },
       "split_counts": {
-        "train": 640,
-        "validation": 80,
-        "test": 80
+        "train": 1600,
+        "validation": 200,
+        "test": 200
       }
     },
     "Appliances": {
@@ -77,9 +77,9 @@
       "raw_records": 20000,
       "eligible_records": 17267,
       "filtered_records": 2733,
-      "high_value_labels": 120,
-      "low_value_labels": 680,
-      "product_titles_attached": 800,
+      "high_value_labels": 250,
+      "low_value_labels": 1750,
+      "product_titles_attached": 2000,
       "missing_product_titles": 0,
       "filter_reasons": {
         "too_few_words": 2721,
@@ -87,9 +87,9 @@
         "empty_review_text": 1
       },
       "split_counts": {
-        "train": 640,
-        "validation": 80,
-        "test": 80
+        "train": 1600,
+        "validation": 200,
+        "test": 200
       }
     },
     "Handmade_Products": {
@@ -98,9 +98,9 @@
       "raw_records": 20000,
       "eligible_records": 17579,
       "filtered_records": 2421,
-      "high_value_labels": 120,
-      "low_value_labels": 680,
-      "product_titles_attached": 800,
+      "high_value_labels": 250,
+      "low_value_labels": 1750,
+      "product_titles_attached": 2000,
       "missing_product_titles": 0,
       "filter_reasons": {
         "too_few_words": 2390,
@@ -108,9 +108,9 @@
         "too_few_characters": 13
       },
       "split_counts": {
-        "train": 640,
-        "validation": 80,
-        "test": 80
+        "train": 1600,
+        "validation": 200,
+        "test": 200
       }
     },
     "Health_and_Personal_Care": {
@@ -119,9 +119,9 @@
       "raw_records": 20000,
       "eligible_records": 17650,
       "filtered_records": 2350,
-      "high_value_labels": 120,
-      "low_value_labels": 680,
-      "product_titles_attached": 800,
+      "high_value_labels": 250,
+      "low_value_labels": 1750,
+      "product_titles_attached": 2000,
       "missing_product_titles": 0,
       "filter_reasons": {
         "too_few_words": 2332,
@@ -129,9 +129,9 @@
         "empty_review_text": 6
       },
       "split_counts": {
-        "train": 640,
-        "validation": 80,
-        "test": 80
+        "train": 1600,
+        "validation": 200,
+        "test": 200
       }
     }
   },

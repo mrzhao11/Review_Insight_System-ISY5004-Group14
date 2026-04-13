@@ -142,6 +142,12 @@ def parse_args() -> argparse.Namespace:
         default=2,
         help="How many times to retry a failed Ark request.",
     )
+    parser.add_argument(
+        "--request-timeout",
+        type=float,
+        default=60.0,
+        help="Per-request timeout (seconds) for each Ark API call.",
+    )
     return parser.parse_args()
 
 
@@ -360,6 +366,7 @@ def enrich_rows_with_titles(
 
     for start in range(0, len(rows), batch_size):
         batch = rows[start : start + batch_size]
+        batch_source = "ark"
         try:
             titles = call_ark_titles(
                 batch,
@@ -371,11 +378,12 @@ def enrich_rows_with_titles(
         except RuntimeError:
             stats["failed_batches"] += 1
             titles = [fallback_title(str(row.get(text_column, ""))) for row in batch]
+            batch_source = "fallback"
 
         for row, title in zip(batch, titles):
             review_text = str(row.get(text_column, "")).strip()
             cleaned_title = normalize_title(title)
-            source = "ark"
+            source = batch_source
             if is_low_quality_title(cleaned_title, review_text):
                 cleaned_title = fallback_title(review_text)
                 source = "fallback"
@@ -421,7 +429,7 @@ def generate_pseudo_titles(args: argparse.Namespace) -> Dict[str, Any]:
     client = OpenAI(
         base_url=args.base_url,
         api_key=api_key,
-        timeout=60.0,
+        timeout=args.request_timeout,
     )
 
     split_files = {
@@ -439,6 +447,7 @@ def generate_pseudo_titles(args: argparse.Namespace) -> Dict[str, Any]:
             "negative_label": args.negative_label,
             "batch_size": args.batch_size,
             "limit": args.limit,
+            "request_timeout": args.request_timeout,
             "quality_rules": {
                 "target_words": "3 to 8 preferred; 2 to 10 accepted after cleanup",
                 "rejects_star_rating_titles": True,

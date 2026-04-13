@@ -141,6 +141,15 @@ def parse_args() -> argparse.Namespace:
         help="Allow downloading model files if not already cached locally.",
     )
     parser.add_argument(
+        "--bertscore-model-type",
+        type=str,
+        default="distilbert-base-uncased",
+        help=(
+            "Backbone used to compute BERTScore F1. Use an empty string to skip "
+            "BERTScore."
+        ),
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -217,6 +226,7 @@ def evaluate_model(
     eval_batch_size: int,
     sample_count: int,
     device: torch.device,
+    bertscore_model_type: str | None,
 ) -> tuple[Dict[str, float], List[Dict[str, str]]]:
     """Generate titles and compute lightweight overlap metrics."""
     return evaluate_pairs(
@@ -229,6 +239,7 @@ def evaluate_model(
         batch_size=eval_batch_size,
         sample_count=sample_count,
         device=device,
+        bertscore_model_type=bertscore_model_type,
     )
 
 
@@ -328,6 +339,7 @@ def fine_tune_pseudo_t5(args: argparse.Namespace) -> Dict[str, Any]:
         eval_batch_size=args.eval_batch_size,
         sample_count=args.sample_count,
         device=device,
+        bertscore_model_type=args.bertscore_model_type,
     )
     test_metrics, test_samples = evaluate_model(
         test_pairs,
@@ -338,6 +350,7 @@ def fine_tune_pseudo_t5(args: argparse.Namespace) -> Dict[str, Any]:
         eval_batch_size=args.eval_batch_size,
         sample_count=args.sample_count,
         device=device,
+        bertscore_model_type=args.bertscore_model_type,
     )
 
     metrics = {
@@ -357,6 +370,7 @@ def fine_tune_pseudo_t5(args: argparse.Namespace) -> Dict[str, Any]:
             "learning_rate": args.learning_rate,
             "weight_decay": args.weight_decay,
             "allow_download": args.allow_download,
+            "bertscore_model_type": args.bertscore_model_type,
             "fine_tuned": True,
             "teacher_label_type": "ark_generated_pseudo_title",
         },

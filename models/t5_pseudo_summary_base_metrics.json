@@ -1,0 +1,60 @@
+{
+  "config": {
+    "train_file": "data/processed/pseudo_summary_train.csv",
+    "validation_file": "data/processed/pseudo_summary_validation.csv",
+    "test_file": "data/processed/pseudo_summary_test.csv",
+    "text_column": "clean_review_text",
+    "target_column": "llm_complaint_title",
+    "model_name": "google/flan-t5-base",
+    "output_dir": "models/t5_pseudo_summary_base",
+    "input_max_length": 256,
+    "target_max_length": 24,
+    "num_train_epochs": 5.0,
+    "train_batch_size": 4,
+    "eval_batch_size": 8,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.01,
+    "allow_download": true,
+    "bertscore_model_type": "distilbert-base-uncased",
+    "fine_tuned": true,
+    "teacher_label_type": "ark_generated_pseudo_title"
+  },
+  "dataset_sizes": {
+    "train": 833,
+    "validation": 118,
+    "test": 237
+  },
+  "train": {
+    "train_runtime": 1807.5664,
+    "train_samples_per_second": 2.304,
+    "train_steps_per_second": 0.578,
+    "total_flos": 682634872138752.0,
+    "train_loss": 1.0378418895046106,
+    "epoch": 5.0
+  },
+  "validation_trainer": {
+    "eval_loss": 2.5319321155548096,
+    "eval_runtime": 10.7249,
+    "eval_samples_per_second": 11.002,
+    "eval_steps_per_second": 1.399,
+    "epoch": 5.0
+  },
+  "validation": {
+    "avg_unigram_f1": 0.4080318927776555,
+    "rouge1_f1": 0.4080318927776555,
+    "rouge2_f1": 0.19368442292171106,
+    "rougeL_f1": 0.3874281556484946,
+    "bertscore_f1": 0.8378371596336365,
+    "avg_generated_words": 4.9576271186440675,
+    "avg_reference_words": 4.711864406779661
+  },
+  "test": {
+    "avg_unigram_f1": 0.43463687039636406,
+    "rouge1_f1": 0.43463687039636406,
+    "rouge2_f1": 0.2303462594601835,
+    "rougeL_f1": 0.41212138775429913,
+    "bertscore_f1": 0.8445369005203247,
+    "avg_generated_words": 4.852320675105485,
+    "avg_reference_words": 4.822784810126582
+  }
+}

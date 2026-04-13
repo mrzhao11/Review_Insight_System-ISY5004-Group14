@@ -80,6 +80,18 @@ def parse_args() -> argparse.Namespace:
         help="Maximum VADER compound score for a negative label.",
     )
     parser.add_argument(
+        "--positive-rating-min",
+        type=float,
+        default=4.0,
+        help="Minimum star rating that can be labeled as positive.",
+    )
+    parser.add_argument(
+        "--negative-rating-max",
+        type=float,
+        default=2.0,
+        help="Maximum star rating that can be labeled as negative.",
+    )
+    parser.add_argument(
         "--train-positive-negative-ratio",
         type=float,
         default=3.0,
@@ -106,13 +118,15 @@ def calibrate_label(
     rating: float,
     score: float,
     *,
+    positive_rating_min: float,
+    negative_rating_max: float,
     positive_score_threshold: float,
     negative_score_threshold: float,
 ) -> str:
     """Combine rating and lexicon score into a calibrated sentiment label."""
-    if rating >= 4 and score > positive_score_threshold:
+    if rating >= positive_rating_min and score > positive_score_threshold:
         return "positive"
-    if rating <= 2 and score < negative_score_threshold:
+    if rating <= negative_rating_max and score < negative_score_threshold:
         return "negative"
     return "discard"
 
@@ -131,6 +145,8 @@ def calibrate_rows(
     rating_column: str,
     value_label_column: str,
     high_value_only: bool,
+    positive_rating_min: float,
+    negative_rating_max: float,
     positive_score_threshold: float,
     negative_score_threshold: float,
 ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
@@ -161,6 +177,8 @@ def calibrate_rows(
         sentiment_label = calibrate_label(
             rating,
             score,
+            positive_rating_min=positive_rating_min,
+            negative_rating_max=negative_rating_max,
             positive_score_threshold=positive_score_threshold,
             negative_score_threshold=negative_score_threshold,
         )
@@ -260,16 +278,20 @@ def calibrate_sentiment_labels(args: argparse.Namespace) -> Dict[str, Any]:
             "rating_column": args.rating_column,
             "value_label_column": args.value_label_column,
             "high_value_only": args.high_value_only,
+            "positive_rating_min": args.positive_rating_min,
+            "negative_rating_max": args.negative_rating_max,
             "positive_score_threshold": args.positive_score_threshold,
             "negative_score_threshold": args.negative_score_threshold,
             "train_positive_negative_ratio": args.train_positive_negative_ratio,
             "seed": args.seed,
             "label_rules": {
                 "positive": (
-                    f"rating >= 4 and lex_score > {args.positive_score_threshold}"
+                    f"rating >= {args.positive_rating_min} and "
+                    f"lex_score > {args.positive_score_threshold}"
                 ),
                 "negative": (
-                    f"rating <= 2 and lex_score < {args.negative_score_threshold}"
+                    f"rating <= {args.negative_rating_max} and "
+                    f"lex_score < {args.negative_score_threshold}"
                 ),
                 "discard": "otherwise",
             },
@@ -290,6 +312,8 @@ def calibrate_sentiment_labels(args: argparse.Namespace) -> Dict[str, Any]:
             rating_column=args.rating_column,
             value_label_column=args.value_label_column,
             high_value_only=args.high_value_only,
+            positive_rating_min=args.positive_rating_min,
+            negative_rating_max=args.negative_rating_max,
             positive_score_threshold=args.positive_score_threshold,
             negative_score_threshold=args.negative_score_threshold,
         )

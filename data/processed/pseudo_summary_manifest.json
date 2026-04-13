@@ -6,8 +6,9 @@
     "original_title_column": "clean_review_title",
     "sentiment_column": "sentiment_label",
     "negative_label": "negative",
-    "batch_size": 8,
+    "batch_size": 64,
     "limit": null,
+    "request_timeout": 30.0,
     "quality_rules": {
       "target_words": "3 to 8 preferred; 2 to 10 accepted after cleanup",
       "rejects_star_rating_titles": true,
@@ -17,20 +18,20 @@
   },
   "splits": {
     "train": {
-      "input_rows": 241,
-      "ark_titles": 241,
+      "input_rows": 955,
+      "ark_titles": 955,
       "fallback_titles": 0,
       "failed_batches": 0
     },
     "validation": {
-      "input_rows": 39,
-      "ark_titles": 39,
+      "input_rows": 116,
+      "ark_titles": 116,
       "fallback_titles": 0,
       "failed_batches": 0
     },
     "test": {
-      "input_rows": 25,
-      "ark_titles": 25,
+      "input_rows": 117,
+      "ark_titles": 117,
       "fallback_titles": 0,
       "failed_batches": 0
     }
@@ -46,12 +47,12 @@
     "train_ratio": 0.7,
     "validation_ratio": 0.1,
     "test_ratio": 0.2,
-    "rows_before_dedup": 305,
-    "rows_after_dedup": 305,
+    "rows_before_dedup": 1188,
+    "rows_after_dedup": 1188,
     "split_counts": {
-      "train": 214,
-      "validation": 30,
-      "test": 61
+      "train": 833,
+      "validation": 118,
+      "test": 237
     }
   }
 }

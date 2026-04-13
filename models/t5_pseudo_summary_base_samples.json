@@ -1,0 +1,106 @@
+{
+  "validation": [
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Did not fit the Pedegg model I have. The value and quality was great, but sadly I had to return them.",
+      "target_text": "Did not fit my Pedegg model",
+      "generated_summary": "Does not fit Pedegg model"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Call me crazy, but when I order something that says \"sterling silver,\" I expect it to look silver out of the box. I opened this and immediately noticed it is either tarnished or rusted. No thank you.",
+      "target_text": "Sterling silver came tarnished/rusted",
+      "generated_summary": "Sterling silver, tarnished"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: No build up and it smell nice. But not moisturizing.",
+      "target_text": "Product not moisturizing",
+      "generated_summary": "No build up, not moisturizing"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: only curls one way, does t get really hot, very very small sections of hair at a time. If you have thick hair, forget unless youave a couple of hours. Plus side, you do get your refund quickly",
+      "target_text": "Only curls one way, low heat",
+      "generated_summary": "Curls too hot, gets returned"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Is a zero rating possible. This egg is horrible. First off it sounds like a smoke detected siren. Second it is jerry rigged inside and hot glued together. Good luck hiding something inside it and it being food safe. Also my visually impaired daughter is down right scared by this egg. Will not recommend and would recommend the talking egg or chirping eggs from other sellers on Amazon instead. and the price is OUTRAGEOUS",
+      "target_text": "Extremely loud, poorly constructed",
+      "generated_summary": "Egg is jerry rigged, hot"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This is so small it looks like a child's size. Not what the picture represents. Shorter then shown also. Very disappointed but this one example you get what you pay for.",
+      "target_text": "Much smaller than pictured",
+      "generated_summary": "Product is too small, not as pictured"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: my gums implore you, go with another brand. i give them a star for being a flosser, and they will get in the teeth. and another as they have a nice fold down pick part, and they have a carrier plastic pouch in there to take them on the go, its reusable so dont lose it. now, they will get stuck in tight teeth. then shred. and they are a bit thin, so watch those gums. they are painful on the gums. i would pass on these. unless you use them for that one tooth that catches meat every time you eat, they will do that. but if you think you can go around all 32, nope. this is a product I wont try again.",
+      "target_text": "Flosser shreds and irritates gums",
+      "generated_summary": "Thin gums shred easily"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: PROs: The product arrived at my house sooner then expected like most AMAZON stuff. It worked ONCE. CONs: It's NOT working! I've replaced the wire = still doesn't work. I've replaced the pads = still doesn't work. I've tried every channel = still doesn't work. I've recharged it = still doesn't work. The screen lights. The TIMER counts down. The 'CH', 'TENS' & the chosen TENs' ICON MODE blinks/flashes; but, NO FEELing!!! I WISHED I had bought the TENs & EMS unit from the company that made my TIGHT for LIFE KEGEL 8 unit that still works after 20 years of use w/ a 9v battery.",
+      "target_text": "TENS unit stops working after one use",
+      "generated_summary": "Doesn't work after 20 uses"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I bought this on July 16 and have been using it daily since. I've noticed that the coffee is now much slower to drain than it did when I first started using it. Kind of a bummer since it's only been two weeks!",
+      "target_text": "Coffee drains much slower after two weeks",
+      "generated_summary": "Coffee drains slower than it first used"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: It’s ok. Certainly nothing special. Just an average face wash.",
+      "target_text": "Only average no special qualities",
+      "generated_summary": "Nothing special about face wash"
+    }
+  ],
+  "test": [
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This was NOT what I expected. It's so THIN .I WILL NOT PURCHASE IT AGAIN .I PURCHASE 4. BIG MISTAKE.",
+      "target_text": "Product is overly thin",
+      "generated_summary": "Thin, ill-shaped, bad quality"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Didn't work well, was hard to remove, and to hot to touch..",
+      "target_text": "Doesn't work well, too hot",
+      "generated_summary": "Hard to remove and hot to touch"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Stone is nice, but there's nothing special about these.",
+      "target_text": "Beads have no special features",
+      "generated_summary": "Nothing special about stone"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: The instructions are lacking. You have to find a youtube video to figure out how to use this. It's difficult to use on your own head without the fear of it getting tangled in your hair. It does curl if you can manage to figure it out, but I don't think it's worth the frustration.",
+      "target_text": "Lacks instructions hard to use",
+      "generated_summary": "Instructions missing from YouTube"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Too messy. I'll go back to a spoon.",
+      "target_text": "Too messy for use",
+      "generated_summary": "Too messy, will go back to spoon"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Very difficult to use. The Down arrow only works sometimes.",
+      "target_text": "Down arrow works sometimes",
+      "generated_summary": "Hard to use, Down arrow only works once"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: My breast were hanging out of the side band because it is cut so narrow.",
+      "target_text": "Cut too narrow, breasts slip out",
+      "generated_summary": "Breasts hang out of side band"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not what i thought. Very tiny and now has many",
+      "target_text": "Product is very tiny",
+      "generated_summary": "Very tiny, has many items"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This is one of the worst processed curly hair i have purchaced .. it literally turned into a matted ball... i turned it into a wig not a sew in and it should last longer... nope had to turn this wig into a permanent low bun ball until i order from another company... at first the hair looks and feels great ... then the shedding and mating starts.. i didn't cut the wefts ... the nape area is the worst... not even sillicone mix can save it... these reviews are very misleading . the hair will not last you more than 2 months as a wig only wearing it a few times . But u guess you get what you pay for",
+      "target_text": "Hair tangles badly sheds",
+      "generated_summary": "Curly hair sheds mating quickly"
+    },
+    {
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Cheap made. A waste of money.",
+      "target_text": "Cheaply made waste of money",
+      "generated_summary": "Cheap made, waste of money"
+    }
+  ]
+}
