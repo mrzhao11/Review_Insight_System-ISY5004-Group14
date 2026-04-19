@@ -34,7 +34,7 @@
 | BERT sentiment classification | F1 0.990 | 标签来自 rating + VADER 规则，不是人工标注。 |
 | Pseudo-label Flan-T5-small | ROUGE-L F1 0.373 / BERTScore F1 0.834 | 在 833/118/237 split 上微调后的结果。 |
 | Pseudo-label Flan-T5-base | ROUGE-L F1 0.412 / BERTScore F1 0.845 | 同一 split 上优于 Flan-T5-small。 |
-| Zero-shot Flan-T5 baseline (legacy) | ROUGE-L F1 0.146 | 这是旧的 61-row split 指标，未在新 237-row split 上重跑。 |
+| Zero-shot vs base (PPT 快速对比) | Base wins 3/3 | 随机抽样 3 条（seed=42），结果见 `models/zero_vs_base_3sample_comparison.json`。 |
 
 ## 3. 目录地图
 
@@ -127,9 +127,9 @@ flowchart TD
     E --> F["BERT sentiment fine-tuning"]
     E --> G["Negative reviews only"]
     G --> H["Ark generates pseudo complaint titles"]
-    H --> I["Re-split pseudo titles: 214 / 30 / 61"]
+    H --> I["Re-split pseudo titles: 833 / 118 / 237"]
     I --> J["Fine-tune Flan-T5 student"]
-    I --> K["Zero-shot Flan-T5 baseline on same split"]
+    I --> K["(Optional) 3-sample zero vs base PPT check"]
     C --> L["Dashboard payload merge"]
     E --> L
     D --> M["Streamlit dashboard"]
@@ -366,29 +366,31 @@ id2label = {0: "negative", 1: "positive"}
 - 不能直接说它在人类真实情感标注上也有 0.99 F1。
 - 应写成：BERT learns the calibrated sentiment labels derived from rating and VADER signals.
 
-### 6.3 Zero-shot Flan-T5 baseline
+### 6.3 Zero-shot 对比（仅 PPT 快速样例）
 
-评估命令：
+这里不再维护完整 zero-shot benchmark。当前仅保留一个轻量的展示流程：在 test split 随机抽样 3 条，比较 zero-shot `flan-t5-small` 和 fine-tuned `flan-t5-base` 的生成结果。
+
+命令：
 
 ```bash
-.venv/bin/python -m src.summarization.train_t5 \
-  --train-file data/processed/pseudo_summary_train.csv \
-  --validation-file data/processed/pseudo_summary_validation.csv \
-  --test-file data/processed/pseudo_summary_test.csv \
-  --target-column llm_complaint_title
+.venv/bin/python -m src.summarization.sample_zero_vs_base \
+  --sample-size 3 \
+  --seed 42
 ```
 
-这里虽然脚本名叫 `train_t5.py`，但它对 zero-shot baseline 不训练，只加载 `google/flan-t5-small` 直接生成并评估。
+输出文件：
 
-当前 test 指标（legacy 61-row split）：
+```text
+models/zero_vs_base_3sample_comparison.json
+```
 
-| Metric | Value |
+当前抽样结果（seed=42）：
+
+| Summary | Value |
 | --- | ---: |
-| ROUGE-1 F1 | 0.156 |
-| ROUGE-2 F1 | 0.060 |
-| ROUGE-L F1 | 0.146 |
-| Avg generated words | 6.93 |
-| Avg reference words | 4.82 |
+| Base wins | 3 |
+| Zero wins | 0 |
+| Ties | 0 |
 
 ### 6.4 Pseudo-label T5 student
 
@@ -532,19 +534,20 @@ DEMO_SPLIT = "test"
 
 ## 9. 标题生成 runtime fallback
 
-`app/streamlit_app.py` 中 `summarize_issue()` 的 fallback 链如下：
+`app/streamlit_app.py` 中 `summarize_issue()` 的 fallback 链如下（当前代码优先级）：
 
 ```text
-1. 如果 models/t5_pseudo_summary/config.json 存在：
-     使用本地 pseudo-label T5 student。
+1. models/t5_pseudo_summary_base/
+2. models/t5_pseudo_summary_small/
+3. models/t5_pseudo_summary/ (legacy)
 
-2. 如果本地 student 不存在或加载失败：
+4. 如果本地 student 不存在或加载失败：
      如果 ARK_API_KEY 可用，调用 Ark 直接生成 complaint title。
 
-3. 如果 Ark 不可用：
+5. 如果 Ark 不可用：
      尝试使用缓存的 zero-shot google/flan-t5-small。
 
-4. 如果 zero-shot T5 也不可用：
+6. 如果 zero-shot T5 也不可用：
      使用本地 heuristic 从评论中抽取短标题。
 ```
 
@@ -612,12 +615,10 @@ The caps do not stay on the pencils
   --allow-download \
   --bertscore-model-type distilbert-base-uncased
 
-# 8. (Optional legacy) Evaluate zero-shot T5 baseline
-.venv/bin/python -m src.summarization.train_t5 \
-  --train-file data/processed/pseudo_summary_train.csv \
-  --validation-file data/processed/pseudo_summary_validation.csv \
-  --test-file data/processed/pseudo_summary_test.csv \
-  --target-column llm_complaint_title
+# 8. (Optional, PPT only) Sample 3 zero-shot vs base cases
+.venv/bin/python -m src.summarization.sample_zero_vs_base \
+  --sample-size 3 \
+  --seed 42
 
 # 9. Launch dashboard
 .venv/bin/streamlit run app/streamlit_app.py
@@ -633,9 +634,9 @@ The caps do not stay on the pencils
 
 3. Complaint-title labels 是 Ark 生成的 pseudo labels，不是 human gold labels。T5 student 的提升说明 teacher-generated normalized titles 有帮助，但指标仍应被解释为 demo-oriented evaluation。
 
-4. T5 test set 已从 25 扩到 61，但整体仍然偏小。报告里可以说 expanded test split，而不要夸大成大规模评估。
+4. T5 主评估 test set 已扩到 237，但整体仍不算大规模；报告中应强调 demo-oriented evaluation。
 
-5. `models/bert_sentiment/`, `models/t5_summary/`, `models/t5_pseudo_summary/` 是大模型目录，被 `.gitignore` 忽略。GitHub 上通常只保留 metrics、samples 和小的 sklearn bundle。
+5. `models/bert_sentiment/`, `models/t5_summary/`, `models/t5_pseudo_summary/`, `models/t5_pseudo_summary_small/`, `models/t5_pseudo_summary_base/` 是大模型目录，被 `.gitignore` 忽略。GitHub 上通常只保留 metrics、samples 和小的 sklearn bundle。
 
 6. 如果老师 clone 仓库但没有本地 T5 student，dashboard 会尝试 Ark fallback；如果 Ark key 也没有，会尝试 zero-shot T5；如果本地也没有 Hugging Face cache，则最后用 heuristic title，避免页面直接崩掉。
 

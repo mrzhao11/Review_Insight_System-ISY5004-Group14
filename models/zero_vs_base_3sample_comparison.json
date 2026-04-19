@@ -1,0 +1,47 @@
+{
+  "config": {
+    "test_file": "data/processed/pseudo_summary_test.csv",
+    "sample_size": 3,
+    "seed": 42,
+    "zero_model_name": "google/flan-t5-small",
+    "base_model_dir": "models/t5_pseudo_summary_base",
+    "scoring_note": "winner is decided by per-example ROUGE-L F1 only"
+  },
+  "summary": {
+    "base_wins": 3,
+    "zero_wins": 0,
+    "ties": 0
+  },
+  "samples": [
+    {
+      "review_id": "AH5XKQPGVEMLJJUION75C5O3T6SA_B00B4OTTKS_1468180845000",
+      "review_text": "These were a waste of money does not add any volume whatsoever...",
+      "reference_title": "Adds no hair volume",
+      "zero_shot_title": "This is a waste of money",
+      "base_finetuned_title": "Does not add any volume",
+      "rougeL_f1_zero": 0.0,
+      "rougeL_f1_base": 0.22222222222222224,
+      "winner_by_rougeL": "base"
+    },
+    {
+      "review_id": "AEI342MDA32TKMKQ7PEPNHCQ3MWQ_B01DVXDREI_1492466465000",
+      "review_text": "This gave me a swollen eye and ridiculous lashes that curled on themselves all the way back to my eyelid. The sticky rods TORE MY SKIN OPEN. There was a little piece of my skin stuck to the rod, and a hole on my eyelid. Wtf. Removing the super sticky rods caused my lids to bruise all along the lashline. Then my eye swelled up either because of the trauma, or because of product getting into the wound. Either way, bad news. Eyes are delicate, don't mess with this. No ingredients listed, no brand to complain to. This is imported from China with no consumer safety guarantees.",
+      "reference_title": "Causes injury and swollen eye",
+      "zero_shot_title": "Wtf. Removing the super sticky rods caused my eye swelled up either because",
+      "base_finetuned_title": "Mascara causes swollen eye and bruises",
+      "rougeL_f1_zero": 0.1111111111111111,
+      "rougeL_f1_base": 0.5454545454545454,
+      "winner_by_rougeL": "base"
+    },
+    {
+      "review_id": "AFB6OR5RIL4UP5HCNAYDCP24UQ4Q_B08QM77HZG_1617295702780",
+      "review_text": "My breast were hanging out of the side band because it is cut so narrow.",
+      "reference_title": "Cut too narrow, breasts slip out",
+      "zero_shot_title": "The side band is too narrow to fit my breast.",
+      "base_finetuned_title": "Breasts hang out of side band",
+      "rougeL_f1_zero": 0.25,
+      "rougeL_f1_base": 0.3333333333333333,
+      "winner_by_rougeL": "base"
+    }
+  ]
+}

@@ -45,7 +45,11 @@ from src.visualization.dashboard_utils import (
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 BERT_MODEL_DIR = MODELS_DIR / "bert_sentiment"
-SUMMARY_STUDENT_DIR = MODELS_DIR / "t5_pseudo_summary"
+SUMMARY_STUDENT_DIR_CANDIDATES = [
+    MODELS_DIR / "t5_pseudo_summary_base",
+    MODELS_DIR / "t5_pseudo_summary_small",
+    MODELS_DIR / "t5_pseudo_summary",
+]
 SUMMARY_MODEL_NAME = "google/flan-t5-small"
 DEMO_SPLIT = "test"
 UPLOAD_REQUIRED_COLUMNS = ("review_text",)
@@ -212,23 +216,44 @@ def load_metrics() -> dict[str, Any]:
     """Load saved model metrics for dashboard display."""
     zero_shot_metrics = json.loads((MODELS_DIR / "t5_summary_metrics.json").read_text())
     zero_shot_samples = json.loads((MODELS_DIR / "t5_summary_samples.json").read_text())
-    pseudo_metrics_path = MODELS_DIR / "t5_pseudo_summary_metrics.json"
-    pseudo_samples_path = MODELS_DIR / "t5_pseudo_summary_samples.json"
+    summary_candidates = [
+        (
+            MODELS_DIR / "t5_pseudo_summary_base_metrics.json",
+            MODELS_DIR / "t5_pseudo_summary_base_samples.json",
+            "Pseudo-label T5-base",
+        ),
+        (
+            MODELS_DIR / "t5_pseudo_summary_small_metrics.json",
+            MODELS_DIR / "t5_pseudo_summary_small_samples.json",
+            "Pseudo-label T5-small",
+        ),
+        (
+            MODELS_DIR / "t5_pseudo_summary_metrics.json",
+            MODELS_DIR / "t5_pseudo_summary_samples.json",
+            "Pseudo-label T5 student",
+        ),
+    ]
 
-    if pseudo_metrics_path.exists() and pseudo_samples_path.exists():
-        summary_metrics = json.loads(pseudo_metrics_path.read_text())
-        summary_samples = json.loads(pseudo_samples_path.read_text())
-        summary_display_name = "Pseudo-label T5 student"
-        summary_display_delta = (
-            f"test ROUGE-L F1 {summary_metrics['test']['rougeL_f1']:.3f}"
-        )
+    summary_metrics = zero_shot_metrics
+    summary_samples = zero_shot_samples
+    summary_display_name = "Zero-shot T5"
+
+    for metrics_path, samples_path, display_name in summary_candidates:
+        if metrics_path.exists() and samples_path.exists():
+            summary_metrics = json.loads(metrics_path.read_text())
+            summary_samples = json.loads(samples_path.read_text())
+            summary_display_name = display_name
+            break
+
+    test_metrics = summary_metrics.get("test", {})
+    rouge_l = test_metrics.get("rougeL_f1")
+    bertscore = test_metrics.get("bertscore_f1")
+    if isinstance(rouge_l, (int, float)):
+        summary_display_delta = f"test ROUGE-L F1 {rouge_l:.3f}"
+        if isinstance(bertscore, (int, float)):
+            summary_display_delta += f" | BERTScore F1 {bertscore:.3f}"
     else:
-        summary_metrics = zero_shot_metrics
-        summary_samples = zero_shot_samples
-        summary_display_name = "Zero-shot T5"
-        summary_display_delta = (
-            f"test ROUGE-L F1 {zero_shot_metrics['test']['rougeL_f1']:.3f}"
-        )
+        summary_display_delta = "metrics unavailable"
 
     return {
         "review_value": json.loads((MODELS_DIR / "review_value_metrics.json").read_text()),
@@ -278,9 +303,17 @@ def load_t5_summary_bundle(
     return tokenizer, model, device
 
 
+def resolve_summary_student_dir() -> Path | None:
+    """Return the highest-priority available local student directory."""
+    for candidate in SUMMARY_STUDENT_DIR_CANDIDATES:
+        if (candidate / "config.json").exists():
+            return candidate
+    return None
+
+
 def has_summary_student() -> bool:
-    """Return whether the pseudo-label T5 student is available locally."""
-    return (SUMMARY_STUDENT_DIR / "config.json").exists()
+    """Return whether a pseudo-label T5 student is available locally."""
+    return resolve_summary_student_dir() is not None
 
 
 def generate_title_with_t5(text: str, *, model_source: str) -> str:
@@ -383,11 +416,12 @@ def predict_sentiment(text: str) -> dict[str, float | str]:
 
 def summarize_issue(text: str) -> str:
     """Generate a complaint title with student, Ark, zero-shot T5, then rules."""
-    if has_summary_student():
+    student_dir = resolve_summary_student_dir()
+    if student_dir is not None:
         try:
             generated = generate_title_with_t5(
                 text,
-                model_source=str(SUMMARY_STUDENT_DIR),
+                model_source=str(student_dir),
             )
             return postprocess_summary(generated, text)
         except Exception:
