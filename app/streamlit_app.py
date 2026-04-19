@@ -1102,9 +1102,14 @@ def main() -> None:
         "Dashboard scope uses the sampled full dataset "
         "(train + validation + test)."
     )
-    st.caption("Product list keeps items with at least 2 reviews, sorted by review count.")
+    product_search_keyword = st.text_input(
+        "Search Product",
+        value="",
+        placeholder="Search by product ID or title...",
+    )
+
     category_options = ["All"] + sorted(merged_reviews["category"].dropna().unique().tolist())
-    filter_col1, filter_col2, filter_col3 = st.columns([1.05, 1.55, 1.3])
+    filter_col1, filter_col2, filter_col3 = st.columns([1.05, 1.9, 1.05])
     with filter_col1:
         category = st.selectbox(
             "Category",
@@ -1113,20 +1118,14 @@ def main() -> None:
         )
 
     product_choices = build_product_choices(merged_reviews, category)
-    with filter_col2:
-        product_search_keyword = st.text_input(
-            "Search Product",
-            value="",
-            placeholder="Search by product ID or title...",
-        )
-        filtered_product_choices = filter_product_choices(
-            product_choices,
-            product_search_keyword,
-        )
-        if len(filtered_product_choices) == 1 and len(product_choices) > 1:
-            st.caption("No matched products in current category. Showing all products.")
-            filtered_product_choices = product_choices
+    filtered_product_choices = filter_product_choices(
+        product_choices,
+        product_search_keyword,
+    )
+    if len(filtered_product_choices) == 1 and len(product_choices) > 1:
+        st.caption("No matched products in this category. Please try another keyword.")
 
+    with filter_col2:
         selected_product_id, selected_product_label, _selected_product_count = st.selectbox(
             "Product",
             filtered_product_choices,
@@ -1136,6 +1135,7 @@ def main() -> None:
     ark_ready = bool(os.getenv("ARK_API_KEY"))
     ark_model = os.getenv("ARK_MODEL", ARK_DEMO_MODEL)
     with filter_col3:
+        st.markdown("&nbsp;", unsafe_allow_html=True)
         use_ark_llm = st.toggle(
             "Use Ark LLM in chat",
             value=False,
