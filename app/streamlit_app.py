@@ -73,6 +73,9 @@ CATEGORY_DISPLAY_NAMES = {
     "Handmade_Products": "Handmade Products",
     "Health_and_Personal_Care": "Health & Personal Care",
 }
+PRODUCT_TITLE_OVERRIDES = {
+    "B01CITNELC": "Digital Thermometer",
+}
 
 
 def load_local_env(env_path: Path) -> None:
@@ -595,7 +598,10 @@ def render_ai_titles(dataframe: pd.DataFrame, scope_key: str) -> None:
 
     titles = st.session_state.get(f"generated_titles_{scope_key}")
     if not titles:
-        st.caption("Click the button to generate AI complaint titles for representative negative reviews in the current scope.")
+        st.caption(
+            "Generate concise complaint titles for up to 3 representative negative "
+            "reviews in the selected category and product."
+        )
         return
 
     for generated_title, (_, row) in zip(titles, review_rows.iterrows()):
@@ -705,7 +711,7 @@ def build_product_choices(dataframe: pd.DataFrame, category: str) -> list[tuple[
     choices = [("All", "All products")]
     for product_id, product_title in product_frame.itertuples(index=False, name=None):
         product_id = str(product_id).strip()
-        product_title = str(product_title).strip() or "Untitled product"
+        product_title = normalize_product_title(product_id, product_title)
         if product_id:
             choices.append((product_id, product_title))
     return choices
@@ -722,6 +728,44 @@ def format_category_label(category: Any) -> str:
     """Map dataset category codes to merchant-friendly labels."""
     category_text = str(category)
     return CATEGORY_DISPLAY_NAMES.get(category_text, category_text.replace("_", " "))
+
+
+def normalize_product_title(product_id: str, product_title: Any) -> str:
+    """Normalize noisy product titles for readable UI labels."""
+    normalized_id = str(product_id).strip()
+    if normalized_id in PRODUCT_TITLE_OVERRIDES:
+        return PRODUCT_TITLE_OVERRIDES[normalized_id]
+
+    normalized_title = str(product_title).strip()
+    if not normalized_title:
+        return f"Product {normalized_id}" if normalized_id else "Untitled product"
+
+    if re.fullmatch(r"&{6,}", normalized_title):
+        return f"Product {normalized_id}" if normalized_id else "Untitled product"
+
+    alnum_count = sum(char.isalnum() for char in normalized_title)
+    if alnum_count < max(4, len(normalized_title) // 5):
+        return f"Product {normalized_id}" if normalized_id else "Untitled product"
+
+    return normalized_title
+
+
+def truncate_ui_text(text: str, max_length: int = 52) -> str:
+    """Truncate long labels for compact UI controls."""
+    cleaned = str(text).strip()
+    if len(cleaned) <= max_length:
+        return cleaned
+    return f"{cleaned[: max_length - 1]}..."
+
+
+def format_product_option(option: tuple[str, str]) -> str:
+    """Render product options with compact text for Streamlit selectbox."""
+    product_id, product_title = option
+    if product_id == "All":
+        return product_title
+    short_id = truncate_ui_text(product_id, 18)
+    short_title = truncate_ui_text(product_title, 44)
+    return f"{short_id} | {short_title}"
 
 
 def with_display_categories(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -981,7 +1025,7 @@ def main() -> None:
         page_title="Review Insight Studio",
         page_icon="R",
         layout="wide",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="collapsed",
     )
     inject_styles()
 
@@ -999,7 +1043,7 @@ def main() -> None:
             <div class="hero-eyebrow">Merchant Review Intelligence</div>
             <div class="hero-title">Review Insight Studio</div>
             <p class="hero-copy">
-                Start with a scope on the left, inspect key complaints, and turn long
+                Start with the scope controls below, inspect key complaints, and turn long
                 negative reviews into concise, actionable issue titles.
             </p>
         </div>
@@ -1009,7 +1053,7 @@ def main() -> None:
 
     tip_col1, tip_col2, tip_col3 = st.columns(3)
     tip_col1.markdown(
-        '<div class="quick-tip"><strong>Step 1</strong><br/>Choose category and product in the sidebar.</div>',
+        '<div class="quick-tip"><strong>Step 1</strong><br/>Choose category and product at the top of the page.</div>',
         unsafe_allow_html=True,
     )
     tip_col2.markdown(
@@ -1021,36 +1065,41 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    st.sidebar.header("Filter Scope")
-    st.sidebar.caption("Demo scope uses the held-out test set.")
+    st.markdown("**Scope Filters**")
+    st.caption("Demo scope uses the held-out test set.")
     category_options = ["All"] + sorted(merged_reviews["category"].dropna().unique().tolist())
-    category = st.sidebar.selectbox(
-        "Category",
-        category_options,
-        format_func=format_category_label,
-    )
+    filter_col1, filter_col2, filter_col3 = st.columns([1.05, 1.55, 1.3])
+    with filter_col1:
+        category = st.selectbox(
+            "Category",
+            category_options,
+            format_func=format_category_label,
+        )
 
     product_choices = build_product_choices(merged_reviews, category)
-    product_labels = [label if product_id == "All" else f"{label} ({product_id})" for product_id, label in product_choices]
-    selected_label = st.sidebar.selectbox("Product", product_labels)
-    selected_index = product_labels.index(selected_label)
-    selected_product_id, selected_product_label = product_choices[selected_index]
+    with filter_col2:
+        selected_product_id, selected_product_label = st.selectbox(
+            "Product",
+            product_choices,
+            format_func=format_product_option,
+        )
 
     ark_ready = bool(os.getenv("ARK_API_KEY"))
     ark_model = os.getenv("ARK_MODEL", ARK_DEMO_MODEL)
-    use_ark_llm = st.sidebar.toggle(
-        "Use Ark LLM in chat",
-        value=False,
-        disabled=not ark_ready,
-        help=(
-            "Enable this after configuring ARK_API_KEY. ARK_MODEL can be any "
-            "enabled Ark text model; this project uses the demo model when it is not set."
-        ),
-    )
-    if ark_ready:
-        st.sidebar.caption(f"Current Ark chat model: {ark_model}")
-    else:
-        st.sidebar.caption("ARK_API_KEY is not configured. Chat is using local fallback.")
+    with filter_col3:
+        use_ark_llm = st.toggle(
+            "Use Ark LLM in chat",
+            value=False,
+            disabled=not ark_ready,
+            help=(
+                "Enable this after configuring ARK_API_KEY. ARK_MODEL can be any "
+                "enabled Ark text model; this project uses the demo model when it is not set."
+            ),
+        )
+        if ark_ready:
+            st.caption(f"Current Ark chat model: {ark_model}")
+        else:
+            st.caption("ARK_API_KEY is not configured. Chat is using local fallback.")
 
     scope_dataframe = filter_scope_dataframe(
         merged_reviews,
@@ -1065,6 +1114,11 @@ def main() -> None:
     )
     scope_key = f"{DEMO_SPLIT}_{category}_{selected_product_id}"
     scope_snapshot = build_scope_snapshot(scope_dataframe, scope_label=scope_label)
+
+    if selected_product_id != "All":
+        st.markdown(
+            f"**Selected Product (Full):** `{selected_product_id}` - {escape(selected_product_label)}"
+        )
 
     tab_overview, tab_explorer, tab_live, tab_upload, tab_chat = st.tabs(
         [
@@ -1146,14 +1200,21 @@ def main() -> None:
         render_summary_samples(metrics["summary_samples"].get("test", []))
 
     with tab_explorer:
-        scope_metric1, scope_metric2, scope_metric3, scope_metric4 = st.columns(4)
-        scope_metric1.metric("Current Scope", scope_label)
+        st.caption(
+            "Issue Explorer helps you inspect representative negative reviews, their "
+            "common complaint keywords, and AI-generated complaint titles."
+        )
+        scope_info_col, scope_metric2, scope_metric3, scope_metric4 = st.columns([1.55, 1, 1, 1])
+        scope_info_col.markdown("**Current Scope**")
+        scope_info_col.write(scope_label)
         scope_metric2.metric("Reviews", f"{scope_snapshot['total_reviews']:,}")
         scope_metric3.metric("Negative", f"{scope_snapshot['negative_reviews']:,}")
         scope_metric4.metric(
             "Verified Purchase Rate",
             f"{scope_snapshot['verified_purchase_rate']:.0%}",
         )
+        if selected_product_id != "All":
+            st.caption(f"Full product name: {selected_product_label}")
 
         figure_col, review_col = st.columns([1, 1.1])
         with figure_col:
