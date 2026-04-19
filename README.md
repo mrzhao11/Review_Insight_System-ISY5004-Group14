@@ -3,6 +3,8 @@
 Review Insight System is a coursework ML project for Amazon review analytics.  
 It delivers an end-to-end pipeline from sampled data construction to model training and a local Streamlit dashboard for business-facing review analysis.
 
+Project report draft: [PROJECT_REPORT.md](PROJECT_REPORT.md)
+
 ## Project At A Glance
 
 This project targets three tasks:
@@ -212,4 +214,3 @@ If `google/flan-t5-small` is not cached locally, append `--allow-download`.
 - Sentiment labels are calibrated with rating + VADER rules, not manual annotations.
 - Complaint-title targets are LLM-generated pseudo labels, not human-written gold titles.
 - Title-generation results should be interpreted as demo-oriented effectiveness, not large-scale production validation.
-
