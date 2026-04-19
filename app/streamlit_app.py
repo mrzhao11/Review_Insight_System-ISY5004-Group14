@@ -51,7 +51,7 @@ SUMMARY_STUDENT_DIR_CANDIDATES = [
     MODELS_DIR / "t5_pseudo_summary",
 ]
 SUMMARY_MODEL_NAME = "google/flan-t5-small"
-DEMO_SPLIT = "test"
+DASHBOARD_SCOPE_SPLIT = "all"
 UPLOAD_REQUIRED_COLUMNS = ("review_text",)
 UPLOAD_OPTIONAL_COLUMNS = (
     "review_title",
@@ -696,24 +696,35 @@ def build_upload_template() -> pd.DataFrame:
     )
 
 
-def build_product_choices(dataframe: pd.DataFrame, category: str) -> list[tuple[str, str]]:
-    """Build product filter choices from the current demo scope."""
+def build_product_choices(
+    dataframe: pd.DataFrame,
+    category: str,
+) -> list[tuple[str, str, int]]:
+    """Build product filter choices from the current dashboard scope."""
     scoped = dataframe if category == "All" else dataframe[dataframe["category"] == category]
     if scoped.empty:
-        return [("All", "All products")]
+        return [("All", "All products", 0)]
 
     product_frame = (
-        scoped[["product_id", "product_title"]]
-        .drop_duplicates()
-        .fillna("")
-        .sort_values(by=["product_title", "product_id"])
+        scoped.groupby(["product_id", "product_title"], dropna=False)
+        .size()
+        .rename("review_count")
+        .reset_index()
     )
-    choices = [("All", "All products")]
-    for product_id, product_title in product_frame.itertuples(index=False, name=None):
+    product_frame = (
+        product_frame[product_frame["review_count"] >= 2]
+        .fillna("")
+        .sort_values(
+            by=["review_count", "product_title", "product_id"],
+            ascending=[False, True, True],
+        )
+    )
+    choices: list[tuple[str, str, int]] = [("All", "All products", int(len(product_frame)))]
+    for product_id, product_title, review_count in product_frame.itertuples(index=False, name=None):
         product_id = str(product_id).strip()
         product_title = normalize_product_title(product_id, product_title)
         if product_id:
-            choices.append((product_id, product_title))
+            choices.append((product_id, product_title, int(review_count)))
     return choices
 
 
@@ -758,14 +769,32 @@ def truncate_ui_text(text: str, max_length: int = 52) -> str:
     return f"{cleaned[: max_length - 1]}..."
 
 
-def format_product_option(option: tuple[str, str]) -> str:
+def format_product_option(option: tuple[str, str, int]) -> str:
     """Render product options with compact text for Streamlit selectbox."""
-    product_id, product_title = option
+    product_id, product_title, _review_count = option
     if product_id == "All":
         return product_title
     short_id = truncate_ui_text(product_id, 18)
     short_title = truncate_ui_text(product_title, 44)
     return f"{short_id} | {short_title}"
+
+
+def filter_product_choices(
+    product_choices: list[tuple[str, str, int]],
+    search_keyword: str,
+) -> list[tuple[str, str, int]]:
+    """Filter product choices by product ID or title."""
+    keyword = search_keyword.strip().lower()
+    if not keyword:
+        return product_choices
+
+    all_option = product_choices[:1]
+    matched = [
+        option
+        for option in product_choices[1:]
+        if keyword in option[0].lower() or keyword in option[1].lower()
+    ]
+    return all_option + matched
 
 
 def with_display_categories(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -1031,10 +1060,13 @@ def main() -> None:
 
     payload = load_payload()
     metrics = load_metrics()
-    merged_reviews = filter_scope_dataframe(payload["merged_reviews"], split=DEMO_SPLIT)
+    merged_reviews = filter_scope_dataframe(
+        payload["merged_reviews"],
+        split=DASHBOARD_SCOPE_SPLIT,
+    )
     overview_snapshot = build_scope_snapshot(
         merged_reviews,
-        scope_label="Held-out test set",
+        scope_label="Sampled full dataset",
     )
 
     st.markdown(
@@ -1066,7 +1098,11 @@ def main() -> None:
     )
 
     st.markdown("**Scope Filters**")
-    st.caption("Demo scope uses the held-out test set.")
+    st.caption(
+        "Dashboard scope uses the sampled full dataset "
+        "(train + validation + test)."
+    )
+    st.caption("Product list keeps items with at least 2 reviews, sorted by review count.")
     category_options = ["All"] + sorted(merged_reviews["category"].dropna().unique().tolist())
     filter_col1, filter_col2, filter_col3 = st.columns([1.05, 1.55, 1.3])
     with filter_col1:
@@ -1078,9 +1114,22 @@ def main() -> None:
 
     product_choices = build_product_choices(merged_reviews, category)
     with filter_col2:
-        selected_product_id, selected_product_label = st.selectbox(
-            "Product",
+        product_search_keyword = st.text_input(
+            "Search Product",
+            value="",
+            placeholder="Search by product ID or title...",
+        )
+        filtered_product_choices = filter_product_choices(
             product_choices,
+            product_search_keyword,
+        )
+        if len(filtered_product_choices) == 1 and len(product_choices) > 1:
+            st.caption("No matched products in current category. Showing all products.")
+            filtered_product_choices = product_choices
+
+        selected_product_id, selected_product_label, _selected_product_count = st.selectbox(
+            "Product",
+            filtered_product_choices,
             format_func=format_product_option,
         )
 
@@ -1105,14 +1154,18 @@ def main() -> None:
         merged_reviews,
         category=category,
         product_id=selected_product_id,
-        split=DEMO_SPLIT,
+        split=DASHBOARD_SCOPE_SPLIT,
     )
     scope_label = (
         selected_product_label
         if selected_product_id != "All"
-        else (format_category_label(category) if category != "All" else "Test Set")
+        else (
+            format_category_label(category)
+            if category != "All"
+            else "All sampled reviews"
+        )
     )
-    scope_key = f"{DEMO_SPLIT}_{category}_{selected_product_id}"
+    scope_key = f"{DASHBOARD_SCOPE_SPLIT}_{category}_{selected_product_id}"
     scope_snapshot = build_scope_snapshot(scope_dataframe, scope_label=scope_label)
 
     if selected_product_id != "All":
