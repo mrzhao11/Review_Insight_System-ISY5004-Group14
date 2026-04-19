@@ -1105,7 +1105,7 @@ def main() -> None:
         with chart_col1:
             st.plotly_chart(
                 build_category_overview_figure(with_display_categories(merged_reviews)),
-                width="stretch",
+                use_container_width=True,
                 key="overview_category_chart",
             )
         with chart_col2:
@@ -1113,7 +1113,7 @@ def main() -> None:
             if keyword_figure is not None:
                 st.plotly_chart(
                     keyword_figure,
-                    width="stretch",
+                    use_container_width=True,
                     key="overview_keyword_chart",
                 )
             else:
@@ -1161,7 +1161,7 @@ def main() -> None:
             if keyword_figure is not None:
                 st.plotly_chart(
                     keyword_figure,
-                    width="stretch",
+                    use_container_width=True,
                     key=f"explorer_keyword_chart_{scope_key}",
                 )
             else:
