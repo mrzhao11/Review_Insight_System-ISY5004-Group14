@@ -101,65 +101,75 @@ def inject_styles() -> None:
         """
         <style>
         .stApp {
-            background:
-                radial-gradient(circle at top left, rgba(214, 198, 165, 0.28), transparent 32%),
-                linear-gradient(180deg, #f7f3ea 0%, #f1ebe0 100%);
-            color: #1f1e1a;
-            font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+            background: #f5f7fb;
+            color: #0f172a;
+            font-family: "Inter", "Avenir Next", "Segoe UI", sans-serif;
         }
         .hero-card {
             padding: 1.4rem 1.5rem;
-            border-radius: 22px;
-            background: linear-gradient(135deg, #fdf7eb 0%, #efe1c7 100%);
-            border: 1px solid rgba(124, 90, 54, 0.12);
-            box-shadow: 0 18px 40px rgba(92, 66, 37, 0.08);
+            border-radius: 8px;
+            background: linear-gradient(130deg, #eff6ff 0%, #eefbf6 56%, #fff6ef 100%);
+            border: 1px solid #dbe3f1;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
             margin-bottom: 1rem;
         }
         .hero-eyebrow {
-            letter-spacing: 0.08em;
+            letter-spacing: 0;
             text-transform: uppercase;
             font-size: 0.78rem;
-            color: #9a5a38;
+            color: #0b66c3;
             margin-bottom: 0.2rem;
+            font-weight: 600;
         }
         .hero-title {
             font-size: 2rem;
-            font-weight: 700;
-            color: #2b251f;
+            font-weight: 800;
+            color: #0f172a;
             margin-bottom: 0.4rem;
         }
         .hero-copy {
-            color: #5a5147;
-            line-height: 1.55;
+            color: #334155;
+            line-height: 1.6;
             margin-bottom: 0;
         }
         .section-card {
             padding: 1rem 1.1rem;
-            border-radius: 18px;
-            background: rgba(255, 251, 244, 0.92);
-            border: 1px solid rgba(124, 90, 54, 0.12);
-            box-shadow: 0 12px 24px rgba(92, 66, 37, 0.06);
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #dbe3f1;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
         }
         .review-card {
-            border-left: 4px solid #b44c43;
+            border-left: 4px solid #d33f49;
             padding: 0.9rem 1rem;
-            border-radius: 12px;
-            background: rgba(255, 248, 245, 0.94);
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #ebeff8;
             margin-bottom: 0.8rem;
         }
         .review-title {
             font-weight: 700;
-            color: #3a2d25;
+            color: #0f172a;
             margin-bottom: 0.25rem;
         }
         .review-meta {
             font-size: 0.86rem;
-            color: #7b6c5e;
+            color: #475569;
             margin-bottom: 0.35rem;
         }
         .review-body {
-            color: #4c4339;
+            color: #1e293b;
             line-height: 1.55;
+        }
+        .quick-tip {
+            background: #ffffff;
+            border: 1px solid #dbe3f1;
+            border-left: 4px solid #0b66c3;
+            border-radius: 8px;
+            padding: 0.75rem 0.85rem;
+            color: #1e293b;
+            margin-bottom: 0.65rem;
+            line-height: 1.45;
         }
         .chat-row {
             display: flex;
@@ -174,30 +184,34 @@ def inject_styles() -> None:
         .chat-bubble {
             max-width: 78%;
             padding: 0.9rem 1rem;
-            border-radius: 18px;
-            box-shadow: 0 8px 18px rgba(46, 34, 23, 0.08);
+            border-radius: 8px;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
             line-height: 1.55;
             font-size: 0.96rem;
             white-space: normal;
             word-break: break-word;
         }
         .chat-bubble.user {
-            background: #2f2b26;
-            color: #f9f5ee;
-            border-bottom-right-radius: 8px;
+            background: #0b66c3;
+            color: #f8fbff;
         }
         .chat-bubble.assistant {
-            background: rgba(255, 251, 244, 0.95);
-            color: #312a23;
-            border: 1px solid rgba(124, 90, 54, 0.10);
-            border-bottom-left-radius: 8px;
+            background: #ffffff;
+            color: #0f172a;
+            border: 1px solid #dbe3f1;
         }
         .chat-role {
             font-size: 0.74rem;
-            letter-spacing: 0.06em;
+            letter-spacing: 0;
             text-transform: uppercase;
             opacity: 0.72;
             margin-bottom: 0.35rem;
+        }
+        div[data-testid="stMetricValue"] {
+            color: #0f172a;
+        }
+        div[data-testid="stMetricDelta"] {
+            color: #0b66c3;
         }
         </style>
         """,
@@ -985,11 +999,25 @@ def main() -> None:
             <div class="hero-eyebrow">Merchant Review Intelligence</div>
             <div class="hero-title">Review Insight Studio</div>
             <p class="hero-copy">
-                Monitor customer pain points, inspect high-value negative reviews,
-                generate complaint titles, and ask for merchant-ready recommendations.
+                Start with a scope on the left, inspect key complaints, and turn long
+                negative reviews into concise, actionable issue titles.
             </p>
         </div>
         """,
+        unsafe_allow_html=True,
+    )
+
+    tip_col1, tip_col2, tip_col3 = st.columns(3)
+    tip_col1.markdown(
+        '<div class="quick-tip"><strong>Step 1</strong><br/>Choose category and product in the sidebar.</div>',
+        unsafe_allow_html=True,
+    )
+    tip_col2.markdown(
+        '<div class="quick-tip"><strong>Step 2</strong><br/>Use Issue Explorer to inspect representative negative reviews.</div>',
+        unsafe_allow_html=True,
+    )
+    tip_col3.markdown(
+        '<div class="quick-tip"><strong>Step 3</strong><br/>Use Single Review Check or Upload for live inference.</div>',
         unsafe_allow_html=True,
     )
 
