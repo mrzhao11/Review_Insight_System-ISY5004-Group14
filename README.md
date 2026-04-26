@@ -5,6 +5,16 @@ It delivers an end-to-end pipeline from sampled data construction to model train
 
 Project report: [PROJECT_REPORT.docx](PROJECT_REPORT.docx)
 
+## Business Problem
+
+E-commerce merchants receive a large volume of reviews, but raw review text is difficult to use directly for decision-making. A merchant usually does not want to read thousands of reviews one by one just to answer a few practical questions:
+
+1. Which reviews are likely to contain useful business signals?
+2. Which reviews indicate negative customer experience?
+3. What is the main complaint in a long negative review?
+
+This project turns that business problem into a three-stage NLP pipeline and a local dashboard. The goal is not only to train individual models, but to build a usable review intelligence workflow for business exploration.
+
 ## Project At A Glance
 
 This project targets three tasks:
@@ -14,6 +24,22 @@ This project targets three tasks:
 3. Complaint title generation for negative reviews
 
 The dashboard supports category/product filtering, representative negative review inspection, single-review inference, merchant CSV upload, and assistant-style Q&A.
+
+## End-To-End Workflow
+
+At a high level, the system works like this:
+
+1. Sample and clean Amazon review data from five product categories.
+2. Build a `review_value` dataset using helpful votes as a proxy business-value label.
+3. Build a calibrated sentiment dataset using star ratings plus standard VADER compound thresholds.
+4. Generate pseudo complaint titles only for negative reviews using an LLM teacher model.
+5. Fine-tune local student models for sentiment classification and complaint-title generation.
+6. Serve the trained components inside a Streamlit dashboard for interactive analysis.
+
+In other words, this repository is both:
+
+1. An experiment pipeline for dataset construction, training, and evaluation.
+2. A lightweight business-facing application for exploring model outputs.
 
 ## Current Dataset Snapshot
 
@@ -51,6 +77,18 @@ Overview counts:
 | Sentiment (BERT) | Accuracy **0.966**; F1 **0.981**; Macro-F1 **0.910** | Strong performance on calibrated labels. |
 | Title generation (Flan-T5-small, tuned) | ROUGE-1/2/L: **0.322 / 0.149 / 0.306**; BERTScore F1 **0.816** | Trained on pseudo titles. |
 | Title generation (Flan-T5-base, tuned) | ROUGE-1/2/L: **0.399 / 0.178 / 0.373**; BERTScore F1 **0.830** | Best current title model. |
+
+## What The Dashboard Does
+
+The Streamlit app is designed as the final system surface rather than a separate demo page. It brings the processed data and trained models into one workflow:
+
+1. `Business Overview`: shows key metrics, scope-level counts, category distributions, and summary business indicators.
+2. `Issue Explorer`: lets the user inspect representative negative reviews and generated complaint titles under a selected category or product.
+3. `Single Review Check`: runs the full pipeline on one pasted review, including value classification, sentiment prediction, and complaint-title generation.
+4. `Merchant Upload`: allows batch analysis of a merchant CSV file with local pipeline inference.
+5. `Merchant Copilot`: provides assistant-style responses grounded in the selected review scope, with Ark API support when available.
+
+This matters for assessment because the repository is not just a notebook-style experiment. It contains an integrated language processing system with both offline training and online usage paths.
 ## Reproducibility And Scope Policy
 
 Important alignment policy:
@@ -61,6 +99,8 @@ Important alignment policy:
 This keeps dataset scope consistent across preprocessing, training, and dashboard interpretation.
 
 ## Repository Structure
+
+The repository is organized by pipeline stage so the reader can quickly map each folder to its role in the project.
 
 ```text
 app/
@@ -90,6 +130,78 @@ src/
   visualization/
   utils/
 ```
+
+### `app/`
+
+- [app/streamlit_app.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/app/streamlit_app.py)
+- Main entry point for the Streamlit dashboard.
+- Loads trained models, merges processed datasets, handles user interaction, and exposes the business-facing analysis workflow.
+
+### `data/processed/`
+
+- Stores the prepared CSV splits used by downstream models and dashboard views.
+- `review_value_*.csv`: cleaned sampled review data with the proxy helpfulness/business-value label.
+- `sentiment_*.csv`: calibrated sentiment data built from rating plus VADER thresholds.
+- `pseudo_summary_*.csv`: negative-review complaint-title pairs used for T5 fine-tuning.
+- `*_manifest.json`: metadata files describing dataset rules, split sizes, and generation/re-split settings.
+
+This folder is important because it captures the exact intermediate artifacts used to train the reported models.
+
+### `models/`
+
+- Stores lightweight evaluation artifacts and selected model bundles.
+- `review_value_classifier.pkl`: saved scikit-learn review-value classifier.
+- `*_metrics.json`: metrics used in the report and dashboard.
+- `*_samples.json`: qualitative generation examples for the title-generation task.
+- `zero_vs_base_3sample_comparison.json`: small qualitative comparison between zero-shot and fine-tuned title generation.
+
+Large Transformer model directories are kept locally for runtime use, while the JSON metrics and sample files provide a compact record of experimental results.
+
+### `src/helpfulness/`
+
+- Review-value dataset preparation and model training.
+- [prepare_helpfulness_dataset.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/helpfulness/prepare_helpfulness_dataset.py): samples Amazon reviews, cleans them, and creates the proxy label.
+- [train_helpfulness.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/helpfulness/train_helpfulness.py): trains the TF-IDF + Logistic Regression classifier.
+- [predict_helpfulness.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/helpfulness/predict_helpfulness.py): inference helper for runtime use.
+
+### `src/sentiment/`
+
+- Sentiment dataset calibration and BERT fine-tuning.
+- [label_calibration.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/sentiment/label_calibration.py): applies the rating + VADER rules and writes calibrated CSV splits.
+- [train_bert_sentiment.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/sentiment/train_bert_sentiment.py): fine-tunes and evaluates `bert-base-uncased`.
+
+### `src/summarization/`
+
+- Complaint-title generation logic and T5 training.
+- [generate_pseudo_titles.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/summarization/generate_pseudo_titles.py): uses Ark as the teacher model to create pseudo labels.
+- [fine_tune_t5_pseudo.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/summarization/fine_tune_t5_pseudo.py): trains local Flan-T5 student models.
+- [train_t5.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/summarization/train_t5.py): shared title-generation evaluation utilities, including ROUGE logic.
+- [sample_zero_vs_base.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/summarization/sample_zero_vs_base.py): creates a small qualitative comparison artifact.
+
+### `src/preprocessing/`
+
+- Shared preprocessing entry points and helper wrappers.
+- Includes cleaned text preparation and the thin command entry point used for complaint-title generation and re-splitting.
+
+### `src/visualization/`
+
+- Dashboard-side aggregation and retrieval helpers.
+- [dashboard_utils.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/visualization/dashboard_utils.py) prepares scope-level metrics, representative review retrieval, and assistant-style responses.
+
+### `src/utils/`
+
+- Miscellaneous reusable helpers, including dataset-loading utilities.
+
+## Why The Structure Matters
+
+For a teacher or reviewer, the key takeaway is that the repository is separated into clear layers:
+
+1. `data construction`
+2. `model training`
+3. `evaluation artifacts`
+4. `user-facing dashboard`
+
+That structure makes it easier to verify that the reported metrics, processed data, and application behavior all come from the same reproducible pipeline rather than from disconnected experiments.
 
 ## Environment Setup
 
