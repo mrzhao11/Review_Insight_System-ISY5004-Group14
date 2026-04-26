@@ -3,8 +3,6 @@
 Review Insight System is a coursework ML project for Amazon review analytics.  
 It delivers an end-to-end pipeline from sampled data construction to model training and a local Streamlit dashboard for business-facing review analysis.
 
-Project report: [PROJECT_REPORT.docx](PROJECT_REPORT.docx)
-
 ## Business Problem
 
 E-commerce merchants receive a large volume of reviews, but raw review text is difficult to use directly for decision-making. A merchant usually does not want to read thousands of reviews one by one just to answer a few practical questions:
