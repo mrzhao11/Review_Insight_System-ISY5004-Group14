@@ -20,41 +20,41 @@
     "teacher_label_type": "ark_generated_pseudo_title"
   },
   "dataset_sizes": {
-    "train": 833,
-    "validation": 118,
-    "test": 237
+    "train": 560,
+    "validation": 80,
+    "test": 160
   },
   "train": {
-    "train_runtime": 568.0512,
-    "train_samples_per_second": 7.332,
-    "train_steps_per_second": 1.84,
-    "total_flos": 185314316752896.0,
-    "train_loss": 1.6634147470647638,
+    "train_runtime": 148.768,
+    "train_samples_per_second": 18.821,
+    "train_steps_per_second": 4.705,
+    "total_flos": 141349397053440.0,
+    "train_loss": 1.7665831238882883,
     "epoch": 5.0
   },
   "validation_trainer": {
-    "eval_loss": 2.382864475250244,
-    "eval_runtime": 1.037,
-    "eval_samples_per_second": 113.784,
-    "eval_steps_per_second": 14.464,
+    "eval_loss": 2.4797632694244385,
+    "eval_runtime": 0.7437,
+    "eval_samples_per_second": 107.564,
+    "eval_steps_per_second": 13.446,
     "epoch": 5.0
   },
   "validation": {
-    "avg_unigram_f1": 0.3382469696029018,
-    "rouge1_f1": 0.3382469696029018,
-    "rouge2_f1": 0.1471372318829946,
-    "rougeL_f1": 0.31663496578750816,
-    "bertscore_f1": 0.8188512325286865,
-    "avg_generated_words": 5.067796610169491,
-    "avg_reference_words": 4.711864406779661
+    "avg_unigram_f1": 0.3719247419247419,
+    "rouge1_f1": 0.3719247419247419,
+    "rouge2_f1": 0.168354353979354,
+    "rougeL_f1": 0.3583722527472527,
+    "bertscore_f1": 0.8254777193069458,
+    "avg_generated_words": 5.0125,
+    "avg_reference_words": 4.7625
   },
   "test": {
-    "avg_unigram_f1": 0.39322476632603215,
-    "rouge1_f1": 0.39322476632603215,
-    "rouge2_f1": 0.1870819756895706,
-    "rougeL_f1": 0.37319870705946656,
-    "bertscore_f1": 0.8338809609413147,
-    "avg_generated_words": 4.949367088607595,
-    "avg_reference_words": 4.822784810126582
+    "avg_unigram_f1": 0.3221555874680875,
+    "rouge1_f1": 0.3221555874680875,
+    "rouge2_f1": 0.14885461760461763,
+    "rougeL_f1": 0.30599893162393166,
+    "bertscore_f1": 0.8160220980644226,
+    "avg_generated_words": 4.8125,
+    "avg_reference_words": 4.59375
   }
 }

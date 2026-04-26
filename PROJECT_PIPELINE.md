@@ -2,7 +2,7 @@
 
 本文档是项目的端到端说明，用来快速回顾项目从数据预处理、实验训练、指标评估到 Streamlit 前端展示的完整流程。后续如果上下文过长，先读这个文件，再读 `README.md` 和当前 `git status`。
 
-当前状态基于本地工作区截至 2026-04-19 的结果。
+当前状态基于本地工作区截至 2026-04-26 的结果。
 
 ## 1. 项目目标
 
@@ -31,10 +31,10 @@
 | Task | Test Result | Notes |
 | --- | ---: | --- |
 | Review value classification | Accuracy 0.840 | Positive-class F1 0.418，正类识别仍偏弱。 |
-| BERT sentiment classification | F1 0.990 | 标签来自 rating + VADER 规则，不是人工标注。 |
-| Pseudo-label Flan-T5-small | ROUGE-L F1 0.373 / BERTScore F1 0.834 | 在 833/118/237 split 上微调后的结果。 |
-| Pseudo-label Flan-T5-base | ROUGE-L F1 0.412 / BERTScore F1 0.845 | 同一 split 上优于 Flan-T5-small。 |
-| Zero-shot vs base (PPT 快速对比) | Base wins 3/3 | 随机抽样 3 条（seed=42），结果见 `models/zero_vs_base_3sample_comparison.json`。 |
+| BERT sentiment classification | F1 0.981 | 标签来自 rating + VADER 规则，不是人工标注。 |
+| Pseudo-label Flan-T5-small | ROUGE-L F1 0.306 / BERTScore F1 0.816 | 在 560/80/160 split 上微调后的结果。 |
+| Pseudo-label Flan-T5-base | ROUGE-L F1 0.373 / BERTScore F1 0.830 | 同一 split 上优于 Flan-T5-small。 |
+| Zero-shot vs base (PPT 快速对比) | Base wins 2/3 | 随机抽样 3 条（seed=42），结果见 `models/zero_vs_base_3sample_comparison.json`。 |
 
 ## 3. 目录地图
 
@@ -60,7 +60,7 @@ data/processed/
   pseudo_summary_validation.csv
   pseudo_summary_test.csv
   pseudo_summary_manifest.json
-    Ark 生成的 complaint-title pseudo labels，已经重新切分为 833/118/237。
+    Ark 生成的 complaint-title pseudo labels，已经重新切分为 560/80/160。
 
 models/
   review_value_classifier.pkl
@@ -127,7 +127,7 @@ flowchart TD
     E --> F["BERT sentiment fine-tuning"]
     E --> G["Negative reviews only"]
     G --> H["Ark generates pseudo complaint titles"]
-    H --> I["Re-split pseudo titles: 833 / 118 / 237"]
+    H --> I["Re-split pseudo titles: 560 / 80 / 160"]
     I --> J["Fine-tune Flan-T5 student"]
     I --> K["(Optional) 3-sample zero vs base PPT check"]
     C --> L["Dashboard payload merge"]
@@ -202,15 +202,17 @@ review_value_label = 1 if helpful_votes >= 2 else 0
 
 ```bash
 .venv/bin/python -m src.sentiment.label_calibration \
+  --positive-rating-min 4 \
   --negative-rating-max 3 \
-  --negative-score-threshold 0.2
+  --positive-score-threshold 0.05 \
+  --negative-score-threshold -0.05
 ```
 
-它不是人工标注情感，而是用 star rating 和 VADER compound score 做高置信规则标注：
+它不是人工标注情感，而是用 star rating 和 VADER compound score 做高置信规则标注。这里采用 VADER 常用的标准阈值：compound >= 0.05 视为 positive，compound <= -0.05 视为 negative，中间区间视为 neutral/ambiguous 并丢弃：
 
 ```text
-positive: rating >= 4 and lex_score > 0.0
-negative: rating <= 3 and lex_score < 0.2
+positive: rating >= 4 and lex_score >= 0.05
+negative: rating <= 3 and lex_score <= -0.05
 discard: otherwise
 ```
 
@@ -220,16 +222,16 @@ discard: otherwise
 
 | Split | Rows |
 | --- | ---: |
-| Train | 3,820 |
-| Validation | 856 |
-| Test | 836 |
+| Train | 2,548 |
+| Validation | 818 |
+| Test | 798 |
 
 整体 sentiment：
 
 | Sentiment | Rows |
 | --- | ---: |
-| Positive | 4,324 |
-| Negative | 1,188 |
+| Positive | 3,364 |
+| Negative | 800 |
 
 ### 5.3 生成 complaint-title pseudo labels
 
@@ -270,9 +272,9 @@ export ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 
 | Split before re-split | Rows | Ark Titles | Fallback Titles |
 | --- | ---: | ---: | ---: |
-| Train | 955 | 955 | 0 |
-| Validation | 116 | 116 | 0 |
-| Test | 117 | 117 | 0 |
+| Train | 637 | 637 | 0 |
+| Validation | 82 | 82 | 0 |
+| Test | 81 | 81 | 0 |
 
 ### 5.4 重新切分 pseudo-title 数据
 
@@ -282,7 +284,7 @@ export ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 .venv/bin/python -m src.preprocessing.resplit_complaint_titles
 ```
 
-这个脚本不会调用 Ark，不会烧 API。它把已经生成好的 1,188 条 pseudo-title rows 合并、去重，然后重新切分，目的是扩大 test set，让 T5 评估更稳定。
+这个脚本不会调用 Ark，不会烧 API。它把已经生成好的 800 条 pseudo-title rows 合并、去重，然后重新切分，目的是扩大 test set，让 T5 评估更稳定。
 
 默认比例：
 
@@ -297,9 +299,9 @@ seed: 42
 
 | Split | Rows |
 | --- | ---: |
-| Train | 833 |
-| Validation | 118 |
-| Test | 237 |
+| Train | 560 |
+| Validation | 80 |
+| Test | 160 |
 
 `pseudo_summary_manifest.json` 中会保留 `resplit` 元数据，包括 split ratio、seed 和最终 split counts。
 
@@ -356,9 +358,9 @@ id2label = {0: "negative", 1: "positive"}
 
 | Metric | Value |
 | --- | ---: |
-| Accuracy | 0.982 |
-| F1 | 0.990 |
-| Macro F1 | 0.939 |
+| Accuracy | 0.966 |
+| F1 | 0.981 |
+| Macro F1 | 0.910 |
 
 解读：
 
@@ -388,8 +390,8 @@ models/zero_vs_base_3sample_comparison.json
 
 | Summary | Value |
 | --- | ---: |
-| Base wins | 3 |
-| Zero wins | 0 |
+| Base wins | 2 |
+| Zero wins | 1 |
 | Ties | 0 |
 
 ### 6.4 Pseudo-label T5 student
@@ -420,9 +422,9 @@ models/zero_vs_base_3sample_comparison.json
 
 | Split | Rows |
 | --- | ---: |
-| Train | 833 |
-| Validation | 118 |
-| Test | 237 |
+| Train | 560 |
+| Validation | 80 |
+| Test | 160 |
 
 训练配置：
 
@@ -440,24 +442,24 @@ models/zero_vs_base_3sample_comparison.json
 
 | Metric | Value |
 | --- | ---: |
-| Flan-T5-small ROUGE-1/2/L F1 | 0.393 / 0.187 / 0.373 |
-| Flan-T5-small BERTScore F1 | 0.834 |
-| Flan-T5-base ROUGE-1/2/L F1 | 0.435 / 0.230 / 0.412 |
-| Flan-T5-base BERTScore F1 | 0.845 |
-| Avg generated words | small 4.95 / base 4.85 |
-| Avg reference words | 4.82 |
+| Flan-T5-small ROUGE-1/2/L F1 | 0.322 / 0.149 / 0.306 |
+| Flan-T5-small BERTScore F1 | 0.816 |
+| Flan-T5-base ROUGE-1/2/L F1 | 0.399 / 0.178 / 0.373 |
+| Flan-T5-base BERTScore F1 | 0.830 |
+| Avg generated words | small 4.81 / base 4.68 |
+| Avg reference words | 4.59 |
 
-当前主对比（同一 237-row split）：
+当前主对比（同一 160-row split）：
 
 | Model | Test Rows | ROUGE-1 F1 | ROUGE-2 F1 | ROUGE-L F1 | BERTScore F1 |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Flan-T5-small (pseudo-label tuned) | 237 | 0.393 | 0.187 | 0.373 | 0.834 |
-| Flan-T5-base (pseudo-label tuned) | 237 | 0.435 | 0.230 | 0.412 | 0.845 |
+| Flan-T5-small (pseudo-label tuned) | 160 | 0.322 | 0.149 | 0.306 | 0.816 |
+| Flan-T5-base (pseudo-label tuned) | 160 | 0.399 | 0.178 | 0.373 | 0.830 |
 
 推荐报告写法：
 
 ```text
-On the expanded 237-row pseudo-title test split, Flan-T5-base outperforms Flan-T5-small, reaching ROUGE-L F1 0.412 and BERTScore F1 0.845.
+On the 160-row pseudo-title test split, Flan-T5-base outperforms Flan-T5-small, reaching ROUGE-L F1 0.373 and BERTScore F1 0.830.
 ```
 
 不要报告 exact match。短标题生成有多个合理表达，exact match 会低估语义质量，也容易被老师质疑。
@@ -506,7 +508,7 @@ DASHBOARD_SCOPE_SPLIT = "all"
 ```
 
 这样做是为了演示可读性：当前数据在商品维度非常稀疏，如果只看 test split，会出现大量“一个商品只有一条评论”的页面效果，老师容易误解为系统取数异常。  
-注意这不影响模型评估口径：模型指标仍来自各自的 held-out test split（review-value 1,000；sentiment 836；pseudo-title T5 237）。
+注意这不影响模型评估口径：模型指标仍来自各自的 held-out test split（review-value 1,000；sentiment 798；pseudo-title T5 160）。
 
 主要 tab：
 
@@ -585,8 +587,10 @@ The caps do not stay on the pencils
 
 # 2. Calibrate sentiment labels
 .venv/bin/python -m src.sentiment.label_calibration \
+  --positive-rating-min 4 \
   --negative-rating-max 3 \
-  --negative-score-threshold 0.2
+  --positive-score-threshold 0.05 \
+  --negative-score-threshold -0.05
 
 # 3. Generate Ark pseudo complaint titles
 .venv/bin/python -m src.preprocessing.generate_complaint_titles
@@ -633,11 +637,11 @@ The caps do not stay on the pencils
 
 1. `review_value_label` 是 helpful votes 的代理标签，不是人工高质量评论标签。
 
-2. Sentiment labels 是 `rating + VADER` 规则校准，不是人工标注。BERT 的高 F1 说明它学到了规则标签，不代表真实情感识别达到 0.99。
+2. Sentiment labels 是 `rating + VADER` 规则校准，不是人工标注。BERT 的高 F1 说明它学到了规则标签，不代表真实情感识别达到 0.98。
 
 3. Complaint-title labels 是 Ark 生成的 pseudo labels，不是 human gold labels。T5 student 的提升说明 teacher-generated normalized titles 有帮助，但指标仍应被解释为 demo-oriented evaluation。
 
-4. T5 主评估 test set 已扩到 237，但整体仍不算大规模；报告中应强调 demo-oriented evaluation。
+4. T5 主评估 test set 为 160，但整体仍不算大规模；报告中应强调 demo-oriented evaluation。
 
 5. `models/bert_sentiment/`, `models/t5_summary/`, `models/t5_pseudo_summary/`, `models/t5_pseudo_summary_small/`, `models/t5_pseudo_summary_base/` 是大模型目录，被 `.gitignore` 忽略。GitHub 上通常只保留 metrics、samples 和小的 sklearn bundle。
 

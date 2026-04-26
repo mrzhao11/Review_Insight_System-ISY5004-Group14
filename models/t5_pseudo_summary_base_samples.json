@@ -1,106 +1,106 @@
 {
   "validation": [
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Did not fit the Pedegg model I have. The value and quality was great, but sadly I had to return them.",
-      "target_text": "Did not fit my Pedegg model",
-      "generated_summary": "Does not fit Pedegg model"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Did Frigidaire's engineers design this to fail? They certainly didn't seem to care about how long a ridiculously thin piece of plastic wedged into the door frame would last, or test it for durability. I've had to replace this shelf every two years or so because it cracks and breaks under normal loads.",
+      "target_text": "Shelf cracks and breaks often",
+      "generated_summary": "Cracks and breaks easily"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Call me crazy, but when I order something that says \"sterling silver,\" I expect it to look silver out of the box. I opened this and immediately noticed it is either tarnished or rusted. No thank you.",
-      "target_text": "Sterling silver came tarnished/rusted",
-      "generated_summary": "Sterling silver, tarnished"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: They fit decently, I bought the biggest they had I think. Tag said 5x. They do not have a gusset which I thought they would. They are long which I like and thin material but somehow HOT! I had to change out of them after getting really sweaty...yes I live in Texas and its summer but I was indoors the entire time I had them on. Over all I don't recommend them. Too hot under clothes for \"underwear\" and too thin to be shorts... what are they then?! Anyways I do not like them. I will update if they tear soon because of how thin they are. Update: decided to return and not waste $20 on something ill never wear.",
+      "target_text": "Too hot for underwear",
+      "generated_summary": "Too thin, overly thin"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: No build up and it smell nice. But not moisturizing.",
-      "target_text": "Product not moisturizing",
-      "generated_summary": "No build up, not moisturizing"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Units failed after 2 months. This is the second time Ive replaced lights in 4 years.",
+      "target_text": "Units failed after two months",
+      "generated_summary": "Units failed after two months"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: only curls one way, does t get really hot, very very small sections of hair at a time. If you have thick hair, forget unless youave a couple of hours. Plus side, you do get your refund quickly",
-      "target_text": "Only curls one way, low heat",
-      "generated_summary": "Curls too hot, gets returned"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: [[VIDEOID:f269f4bbb908ea03a9ffb408f24f4cd3]] This Sunsonic electric shaver for men is simple to use. It comes fully charged. To recharge it, you simply plug the cord into a usb charger and into the shaver. It does not provide a very close shave though. If you prefer a close shave, this may not be the best option for you. If you are looking for an inexpensive electric shaver to keep in your car or in your office for emergencies, or if you are looking for one to travel with, this is a good option. The shaver also comes with a pop-up trimmer. Simply push a button on the back of the shaver and a trimmer pops up so that you can shave your neck and around ears. See my video for additional details.",
+      "target_text": "Does not give close shave",
+      "generated_summary": "Does not provide close shave"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Is a zero rating possible. This egg is horrible. First off it sounds like a smoke detected siren. Second it is jerry rigged inside and hot glued together. Good luck hiding something inside it and it being food safe. Also my visually impaired daughter is down right scared by this egg. Will not recommend and would recommend the talking egg or chirping eggs from other sellers on Amazon instead. and the price is OUTRAGEOUS",
-      "target_text": "Extremely loud, poorly constructed",
-      "generated_summary": "Egg is jerry rigged, hot"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I didn't get Plexaderm trough Amazon; nevertheless, I said the results don't last long. On the contrary, even though I have no wrinkles; only tired eyes and poufiness appearance, I noticed that after the product gets dry, the skin gets with some crepe vertical line on that area. I don't recommend it. 5/26/18",
+      "target_text": "Results don't last long",
+      "generated_summary": "Leaves skin with crepe vertical line"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This is so small it looks like a child's size. Not what the picture represents. Shorter then shown also. Very disappointed but this one example you get what you pay for.",
-      "target_text": "Much smaller than pictured",
-      "generated_summary": "Product is too small, not as pictured"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Snaps broke BOTH ends on the black piece on first use. Fabric is too slippery for straight hair. Engineering fail. I have removed foam core and wrapped hair around that folded in half and tied ends with scrunchie. Wanted this to be fabulous but NOPE.",
+      "target_text": "Snaps broke on first use",
+      "generated_summary": "Snaps broke ends, too slippery"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: my gums implore you, go with another brand. i give them a star for being a flosser, and they will get in the teeth. and another as they have a nice fold down pick part, and they have a carrier plastic pouch in there to take them on the go, its reusable so dont lose it. now, they will get stuck in tight teeth. then shred. and they are a bit thin, so watch those gums. they are painful on the gums. i would pass on these. unless you use them for that one tooth that catches meat every time you eat, they will do that. but if you think you can go around all 32, nope. this is a product I wont try again.",
-      "target_text": "Flosser shreds and irritates gums",
-      "generated_summary": "Thin gums shred easily"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: The pattern on this chain is approx 25 in. The TOTAL chain length is NOT the length that matters. This was totally not clear from the description. I had to return it. It also looks very cheap.",
+      "target_text": "Misleading length looks cheap",
+      "generated_summary": "Chain length not as described"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: PROs: The product arrived at my house sooner then expected like most AMAZON stuff. It worked ONCE. CONs: It's NOT working! I've replaced the wire = still doesn't work. I've replaced the pads = still doesn't work. I've tried every channel = still doesn't work. I've recharged it = still doesn't work. The screen lights. The TIMER counts down. The 'CH', 'TENS' & the chosen TENs' ICON MODE blinks/flashes; but, NO FEELing!!! I WISHED I had bought the TENs & EMS unit from the company that made my TIGHT for LIFE KEGEL 8 unit that still works after 20 years of use w/ a 9v battery.",
-      "target_text": "TENS unit stops working after one use",
-      "generated_summary": "Doesn't work after 20 uses"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Will be returning!! Does not fit my toothbrush even though my model was listed and now i cannot remove the head. Not happy!!!",
+      "target_text": "Won't fit, can't remove head",
+      "generated_summary": "Does not fit toothbrush"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I bought this on July 16 and have been using it daily since. I've noticed that the coffee is now much slower to drain than it did when I first started using it. Kind of a bummer since it's only been two weeks!",
-      "target_text": "Coffee drains much slower after two weeks",
-      "generated_summary": "Coffee drains slower than it first used"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Have not used that much and went to use it today and it gave an error which I think is associated with the band not inflating.",
+      "target_text": "Inflation band causes error",
+      "generated_summary": "Band not inflating, causes error"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: It’s ok. Certainly nothing special. Just an average face wash.",
-      "target_text": "Only average no special qualities",
-      "generated_summary": "Nothing special about face wash"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: There as entire glob missing from a brand new container. The butter itself is a great product but you don't get the advertised amount. It's very misleading..",
+      "target_text": "Missing product from new container",
+      "generated_summary": "Missing entire glob, misleading"
     }
   ],
   "test": [
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This was NOT what I expected. It's so THIN .I WILL NOT PURCHASE IT AGAIN .I PURCHASE 4. BIG MISTAKE.",
-      "target_text": "Product is overly thin",
-      "generated_summary": "Thin, ill-shaped, bad quality"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Difficult to wrap hair around the center of the curler. After rolling a strand of hair, I found it a little difficult to snap the cover over the curler shaft and hair. They do give a nice curl to the hair. It is just too much trouble to use them.",
+      "target_text": "Too troublesome to use",
+      "generated_summary": "Hard to wrap hair around curler"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Didn't work well, was hard to remove, and to hot to touch..",
-      "target_text": "Doesn't work well, too hot",
-      "generated_summary": "Hard to remove and hot to touch"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I was hesitant to order these, because the price is cheap I thought they were going to be cheap as well but no they’re good UPDATE: I originally gave this a 5 stars rating but they fail after a couple of weeks, they got rusty and no longer safe to use.",
+      "target_text": "Got rusty after weeks",
+      "generated_summary": "Failed after few weeks, unsafe"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Stone is nice, but there's nothing special about these.",
-      "target_text": "Beads have no special features",
-      "generated_summary": "Nothing special about stone"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This item isn't pink as the color of the picture. It's an extremely light pink, so light that you can't even see a hint of pink. So that description is inaccurate. In addition, it is extreme hard to put this in your nose. I had to use pliers to somewhat straighten out the curve portion just to put it into my nose, in the process I bruised my nose trying to input it. Not a good product. I would have returned it if I hadn't used pliers to fix it. Don't buy this.",
+      "target_text": "Wrong color, hard to insert",
+      "generated_summary": "Extremely light pink, hard to put"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: The instructions are lacking. You have to find a youtube video to figure out how to use this. It's difficult to use on your own head without the fear of it getting tangled in your hair. It does curl if you can manage to figure it out, but I don't think it's worth the frustration.",
-      "target_text": "Lacks instructions hard to use",
-      "generated_summary": "Instructions missing from YouTube"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: These masks are hard to breathe in and the bands are too loose and won't keep the mask up over my nose and mouth. I wouldn't recommend these.",
+      "target_text": "Hard to breathe, bands too loose",
+      "generated_summary": "Hard to breathe in, bands too loose"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Too messy. I'll go back to a spoon.",
-      "target_text": "Too messy for use",
-      "generated_summary": "Too messy, will go back to spoon"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: They are quite large...larger than needed. But they are basically going to be a one-time wear since the adhesive was pulling off after one short use. I've worn many different adhesive bras, and this is the only one that started peeling off the adhesive this quickly.",
+      "target_text": "Adhesive peels after one use",
+      "generated_summary": "Pulls adhesive after short use"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Very difficult to use. The Down arrow only works sometimes.",
-      "target_text": "Down arrow works sometimes",
-      "generated_summary": "Hard to use, Down arrow only works once"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Can still trash downstairs fighting and screaming at their kids.",
+      "target_text": "Noise travels through product",
+      "generated_summary": "Can still trash downstairs"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: My breast were hanging out of the side band because it is cut so narrow.",
-      "target_text": "Cut too narrow, breasts slip out",
-      "generated_summary": "Breasts hang out of side band"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: I personally don't drink coffee but my Mom has 2 of these that she used before I bought this order and I assumed since she was using them, they were okay. But apparently they don't work well with the Keurig and she had a very difficult time getting them to fit in the spot for the pod. So these have been returned. Sorry ANF Distribution but I got your email after this item was already returned and I'm not sure what you could have done to fix the issue if the pods did not fit, but thank you.",
+      "target_text": "Pods don't fit Keurig",
+      "generated_summary": "Incompatible pods returned"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Not what i thought. Very tiny and now has many",
-      "target_text": "Product is very tiny",
-      "generated_summary": "Very tiny, has many items"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Bottle lid was broken 😒. Other than that, good product.",
+      "target_text": "Bottle lid arrived broken",
+      "generated_summary": "Bottle lid broken"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: This is one of the worst processed curly hair i have purchaced .. it literally turned into a matted ball... i turned it into a wig not a sew in and it should last longer... nope had to turn this wig into a permanent low bun ball until i order from another company... at first the hair looks and feels great ... then the shedding and mating starts.. i didn't cut the wefts ... the nape area is the worst... not even sillicone mix can save it... these reviews are very misleading . the hair will not last you more than 2 months as a wig only wearing it a few times . But u guess you get what you pay for",
-      "target_text": "Hair tangles badly sheds",
-      "generated_summary": "Curly hair sheds mating quickly"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: this fell apart on my daughter the first time she used it. The pearls fell out and the strap broke. I would return it but its not worth the effort based on the price. Will not buy anything like this again.",
+      "target_text": "Fell apart first use",
+      "generated_summary": "Fell apart on first use"
     },
     {
-      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: Cheap made. A waste of money.",
-      "target_text": "Cheaply made waste of money",
-      "generated_summary": "Cheap made, waste of money"
+      "input_text": "Write a short complaint title for this customer review. Keep it concise and focused on the main problem.\n\nReview: It's great when it works but I have tried to charge it up the last two days and it will not take a charge. Very disappointed.",
+      "target_text": "Will not take a charge",
+      "generated_summary": "Doesn't charge after two days"
     }
   ]
 }

@@ -9,13 +9,13 @@
     "high_value_only": false,
     "positive_rating_min": 4.0,
     "negative_rating_max": 3.0,
-    "positive_score_threshold": 0.0,
-    "negative_score_threshold": 0.2,
+    "positive_score_threshold": 0.05,
+    "negative_score_threshold": -0.05,
     "train_positive_negative_ratio": 3.0,
     "seed": 42,
     "label_rules": {
-      "positive": "rating >= 4.0 and lex_score > 0.0",
-      "negative": "rating <= 3.0 and lex_score < 0.2",
+      "positive": "rating >= 4.0 and lex_score >= 0.05",
+      "negative": "rating <= 3.0 and lex_score <= -0.05",
       "discard": "otherwise"
     }
   },
@@ -23,33 +23,33 @@
     "train": {
       "input_rows": 8000,
       "rows_seen_for_calibration": 8000,
-      "discarded_rows": 1251,
-      "positive_rows": 2865,
-      "negative_rows": 955,
-      "rows_before_rebalancing": 6749,
-      "rows_after_rebalancing": 3820,
-      "positive_rows_removed": 2929,
-      "positive_rows_before_rebalancing": 5794,
-      "negative_rows_before_rebalancing": 955
+      "discarded_rows": 1587,
+      "positive_rows": 1911,
+      "negative_rows": 637,
+      "rows_before_rebalancing": 6413,
+      "rows_after_rebalancing": 2548,
+      "positive_rows_removed": 3865,
+      "positive_rows_before_rebalancing": 5776,
+      "negative_rows_before_rebalancing": 637
     },
     "validation": {
       "input_rows": 1000,
       "rows_seen_for_calibration": 1000,
-      "discarded_rows": 144,
-      "positive_rows": 740,
-      "negative_rows": 116,
-      "rows_before_rebalancing": 856,
-      "rows_after_rebalancing": 856,
+      "discarded_rows": 182,
+      "positive_rows": 736,
+      "negative_rows": 82,
+      "rows_before_rebalancing": 818,
+      "rows_after_rebalancing": 818,
       "positive_rows_removed": 0
     },
     "test": {
       "input_rows": 1000,
       "rows_seen_for_calibration": 1000,
-      "discarded_rows": 164,
-      "positive_rows": 719,
-      "negative_rows": 117,
-      "rows_before_rebalancing": 836,
-      "rows_after_rebalancing": 836,
+      "discarded_rows": 202,
+      "positive_rows": 717,
+      "negative_rows": 81,
+      "rows_before_rebalancing": 798,
+      "rows_after_rebalancing": 798,
       "positive_rows_removed": 0
     }
   },
@@ -59,8 +59,8 @@
     "test": "data/processed/sentiment_test.csv"
   },
   "totals": {
-    "positive_rows": 4324,
-    "negative_rows": 1188,
-    "kept_rows": 5512
+    "positive_rows": 3364,
+    "negative_rows": 800,
+    "kept_rows": 4164
   }
 }

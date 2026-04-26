@@ -3,7 +3,7 @@
 Review Insight System is a coursework ML project for Amazon review analytics.  
 It delivers an end-to-end pipeline from sampled data construction to model training and a local Streamlit dashboard for business-facing review analysis.
 
-Project report draft: [PROJECT_REPORT.md](PROJECT_REPORT.md)
+Project report: [PROJECT_REPORT.docx](PROJECT_REPORT.docx)
 
 ## Project At A Glance
 
@@ -30,8 +30,8 @@ Current sizes:
 | Dataset | Train | Validation | Test |
 | --- | ---: | ---: | ---: |
 | Review value | 8,000 | 1,000 | 1,000 |
-| Calibrated sentiment | 3,820 | 856 | 836 |
-| Pseudo complaint titles | 833 | 118 | 237 |
+| Calibrated sentiment | 2,548 | 818 | 798 |
+| Pseudo complaint titles | 560 | 80 | 160 |
 
 Overview counts:
 
@@ -39,18 +39,18 @@ Overview counts:
 | --- | ---: |
 | Total processed reviews | 10,000 |
 | High-value reviews | 1,250 |
-| Calibrated negative reviews | 1,188 |
-| High-value negative reviews | 154 |
-| Pseudo title pairs | 1,188 |
+| Calibrated negative reviews | 800 |
+| High-value negative reviews | 118 |
+| Pseudo title pairs | 800 |
 
 ## Current Model Results
 
 | Task | Test Result | Notes |
 | --- | --- | --- |
 | Review value (TF-IDF + LR) | Accuracy **0.840**; Positive F1 **0.418** | Positive-class recall remains the main weakness. |
-| Sentiment (BERT) | Accuracy **0.982**; F1 **0.990**; Macro-F1 **0.939** | Strong performance on calibrated labels. |
-| Title generation (Flan-T5-small, tuned) | ROUGE-1/2/L: **0.393 / 0.187 / 0.373**; BERTScore F1 **0.834** | Trained on pseudo titles. |
-| Title generation (Flan-T5-base, tuned) | ROUGE-1/2/L: **0.435 / 0.230 / 0.412**; BERTScore F1 **0.845** | Best current title model. |
+| Sentiment (BERT) | Accuracy **0.966**; F1 **0.981**; Macro-F1 **0.910** | Strong performance on calibrated labels. |
+| Title generation (Flan-T5-small, tuned) | ROUGE-1/2/L: **0.322 / 0.149 / 0.306**; BERTScore F1 **0.816** | Trained on pseudo titles. |
+| Title generation (Flan-T5-base, tuned) | ROUGE-1/2/L: **0.399 / 0.178 / 0.373**; BERTScore F1 **0.830** | Best current title model. |
 ## Reproducibility And Scope Policy
 
 Important alignment policy:
@@ -145,8 +145,10 @@ Run from project root.
 
 ```bash
 .venv/bin/python -m src.sentiment.label_calibration \
+  --positive-rating-min 4 \
   --negative-rating-max 3 \
-  --negative-score-threshold 0.2
+  --positive-score-threshold 0.05 \
+  --negative-score-threshold -0.05
 ```
 
 3. Generate pseudo complaint titles (teacher model)
@@ -209,6 +211,6 @@ If `google/flan-t5-small` is not cached locally, append `--allow-download`.
 ## Key Caveats (For Evaluation)
 
 - `review_value_label` is a proxy (`helpful_votes >= 2`), not a human gold quality label.
-- Sentiment labels are calibrated with rating + VADER rules, not manual annotations.
+- Sentiment labels are calibrated with rating + VADER compound thresholds (positive >= 0.05, negative <= -0.05), not manual annotations.
 - Complaint-title targets are LLM-generated pseudo labels, not human-written gold titles.
 - Title-generation results should be interpreted as demo-oriented effectiveness, not large-scale production validation.

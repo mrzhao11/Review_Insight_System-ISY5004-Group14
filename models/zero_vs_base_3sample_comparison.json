@@ -8,39 +8,39 @@
     "scoring_note": "winner is decided by per-example ROUGE-L F1 only"
   },
   "summary": {
-    "base_wins": 3,
-    "zero_wins": 0,
+    "base_wins": 2,
+    "zero_wins": 1,
     "ties": 0
   },
   "samples": [
     {
-      "review_id": "AH5XKQPGVEMLJJUION75C5O3T6SA_B00B4OTTKS_1468180845000",
-      "review_text": "These were a waste of money does not add any volume whatsoever...",
-      "reference_title": "Adds no hair volume",
-      "zero_shot_title": "This is a waste of money",
-      "base_finetuned_title": "Does not add any volume",
+      "review_id": "AHR67KX34PY7D56EXTNRPYZGOMRA_B00838WK4A_1625382999269",
+      "review_text": "I've been advised to use Miele products for my Miele appliances. Miele is indeed superior, but I don't like dealing with chemicals when I can't understand the instructions. I will call Miele before I use it 1st. I'll update this review after it's used",
+      "reference_title": "Instructions hard to understand",
+      "zero_shot_title": "Miele products",
+      "base_finetuned_title": "Incorrect instructions for Miele appliances",
       "rougeL_f1_zero": 0.0,
       "rougeL_f1_base": 0.22222222222222224,
       "winner_by_rougeL": "base"
     },
     {
-      "review_id": "AEI342MDA32TKMKQ7PEPNHCQ3MWQ_B01DVXDREI_1492466465000",
-      "review_text": "This gave me a swollen eye and ridiculous lashes that curled on themselves all the way back to my eyelid. The sticky rods TORE MY SKIN OPEN. There was a little piece of my skin stuck to the rod, and a hole on my eyelid. Wtf. Removing the super sticky rods caused my lids to bruise all along the lashline. Then my eye swelled up either because of the trauma, or because of product getting into the wound. Either way, bad news. Eyes are delicate, don't mess with this. No ingredients listed, no brand to complain to. This is imported from China with no consumer safety guarantees.",
-      "reference_title": "Causes injury and swollen eye",
-      "zero_shot_title": "Wtf. Removing the super sticky rods caused my eye swelled up either because",
-      "base_finetuned_title": "Mascara causes swollen eye and bruises",
-      "rougeL_f1_zero": 0.1111111111111111,
-      "rougeL_f1_base": 0.5454545454545454,
-      "winner_by_rougeL": "base"
+      "review_id": "AGDX5BLNDP4FNKW5SFW5EMN4HLCQ_B0B6Y2D91L_1531837289767",
+      "review_text": "I personally don't drink coffee but my Mom has 2 of these that she used before I bought this order and I assumed since she was using them, they were okay. But apparently they don't work well with the Keurig and she had a very difficult time getting them to fit in the spot for the pod. So these have been returned. Sorry ANF Distribution but I got your email after this item was already returned and I'm not sure what you could have done to fix the issue if the pods did not fit, but thank you.",
+      "reference_title": "Pods don't fit Keurig",
+      "zero_shot_title": "Keurig",
+      "base_finetuned_title": "Incompatible pods returned",
+      "rougeL_f1_zero": 0.4,
+      "rougeL_f1_base": 0.28571428571428575,
+      "winner_by_rougeL": "zero"
     },
     {
-      "review_id": "AFB6OR5RIL4UP5HCNAYDCP24UQ4Q_B08QM77HZG_1617295702780",
-      "review_text": "My breast were hanging out of the side band because it is cut so narrow.",
-      "reference_title": "Cut too narrow, breasts slip out",
-      "zero_shot_title": "The side band is too narrow to fit my breast.",
-      "base_finetuned_title": "Breasts hang out of side band",
-      "rougeL_f1_zero": 0.25,
-      "rougeL_f1_base": 0.3333333333333333,
+      "review_id": "AGH6GS6VVGSLBGJNHCIB34WS6L5A_B0919T3VNB_1641142420385",
+      "review_text": "Cheap! I was saddened and disheartened by the quality. Nope! Don’t do it sis!",
+      "reference_title": "Low product quality",
+      "zero_shot_title": "I was saddened and disheartened by the quality",
+      "base_finetuned_title": "Cheaply made bad quality",
+      "rougeL_f1_zero": 0.18181818181818182,
+      "rougeL_f1_base": 0.28571428571428575,
       "winner_by_rougeL": "base"
     }
   ]

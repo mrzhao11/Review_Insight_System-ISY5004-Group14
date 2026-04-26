@@ -128,6 +128,11 @@ def parse_args() -> argparse.Namespace:
         default=42,
         help="Random seed.",
     )
+    parser.add_argument(
+        "--resume-from-checkpoint",
+        type=Path,
+        help="Optional Trainer checkpoint directory to resume interrupted training.",
+    )
     return parser.parse_args()
 
 
@@ -307,7 +312,10 @@ def train_sentiment_model(args: argparse.Namespace) -> Dict[str, Any]:
         compute_metrics=compute_metrics,
     )
 
-    train_result = trainer.train()
+    resume_from_checkpoint = (
+        str(args.resume_from_checkpoint) if args.resume_from_checkpoint else None
+    )
+    train_result = trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     validation_metrics = trainer.evaluate(validation_dataset)
     test_metrics = trainer.evaluate(test_dataset, metric_key_prefix="test")
 
@@ -331,6 +339,7 @@ def train_sentiment_model(args: argparse.Namespace) -> Dict[str, Any]:
             "weight_decay": args.weight_decay,
             "warmup_ratio": args.warmup_ratio,
             "seed": args.seed,
+            "resume_from_checkpoint": resume_from_checkpoint,
         },
         "dataset_sizes": {
             "train": len(train_records),

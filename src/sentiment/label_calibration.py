@@ -70,14 +70,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--positive-score-threshold",
         type=float,
-        default=0.0,
-        help="Minimum VADER compound score for a positive label.",
+        default=0.05,
+        help=(
+            "Minimum VADER compound score for a positive label. VADER's "
+            "standard convention treats compound >= 0.05 as positive."
+        ),
     )
     parser.add_argument(
         "--negative-score-threshold",
         type=float,
-        default=0.05,
-        help="Maximum VADER compound score for a negative label.",
+        default=-0.05,
+        help=(
+            "Maximum VADER compound score for a negative label. VADER's "
+            "standard convention treats compound <= -0.05 as negative."
+        ),
     )
     parser.add_argument(
         "--positive-rating-min",
@@ -88,7 +94,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--negative-rating-max",
         type=float,
-        default=2.0,
+        default=3.0,
         help="Maximum star rating that can be labeled as negative.",
     )
     parser.add_argument(
@@ -124,9 +130,9 @@ def calibrate_label(
     negative_score_threshold: float,
 ) -> str:
     """Combine rating and lexicon score into a calibrated sentiment label."""
-    if rating >= positive_rating_min and score > positive_score_threshold:
+    if rating >= positive_rating_min and score >= positive_score_threshold:
         return "positive"
-    if rating <= negative_rating_max and score < negative_score_threshold:
+    if rating <= negative_rating_max and score <= negative_score_threshold:
         return "negative"
     return "discard"
 
@@ -287,11 +293,11 @@ def calibrate_sentiment_labels(args: argparse.Namespace) -> Dict[str, Any]:
             "label_rules": {
                 "positive": (
                     f"rating >= {args.positive_rating_min} and "
-                    f"lex_score > {args.positive_score_threshold}"
+                    f"lex_score >= {args.positive_score_threshold}"
                 ),
                 "negative": (
                     f"rating <= {args.negative_rating_max} and "
-                    f"lex_score < {args.negative_score_threshold}"
+                    f"lex_score <= {args.negative_score_threshold}"
                 ),
                 "discard": "otherwise",
             },
