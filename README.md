@@ -71,7 +71,7 @@ Overview counts:
 
 | Task | Test Result | Notes |
 | --- | --- | --- |
-| Review value (TF-IDF + LR) | Accuracy **0.840**; Positive F1 **0.418** | Positive-class recall remains the main weakness. |
+| Review value (TF-IDF + LR) | Accuracy **0.795**; Positive F1 **0.255** | Positive-class recall remains the main weakness. |
 | Sentiment (BERT) | Accuracy **0.966**; F1 **0.981**; Macro-F1 **0.910** | Strong performance on calibrated labels. |
 | Title generation (Flan-T5-small, tuned) | ROUGE-1/2/L: **0.322 / 0.149 / 0.306**; BERTScore F1 **0.816** | Trained on pseudo titles. |
 | Title generation (Flan-T5-base, tuned) | ROUGE-1/2/L: **0.399 / 0.178 / 0.373**; BERTScore F1 **0.830** | Best current title model. |
@@ -131,7 +131,7 @@ src/
 
 ### `app/`
 
-- [app/streamlit_app.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/app/streamlit_app.py)
+- [app/streamlit_app.py](app/streamlit_app.py)
 - Main entry point for the Streamlit dashboard.
 - Loads trained models, merges processed datasets, handles user interaction, and exposes the business-facing analysis workflow.
 
@@ -153,28 +153,35 @@ This folder is important because it captures the exact intermediate artifacts us
 - `*_samples.json`: qualitative generation examples for the title-generation task.
 - `zero_vs_base_3sample_comparison.json`: small qualitative comparison between zero-shot and fine-tuned title generation.
 
-Large Transformer model directories are kept locally for runtime use, while the JSON metrics and sample files provide a compact record of experimental results.
+Full Transformer weight files and checkpoint directories are not committed because they are too large for a normal coursework repository. The repository keeps lightweight evaluation artifacts such as JSON metrics and sample outputs, and may also contain small tokenizer/config files. These lightweight files are not enough to replace the full trained model weights. The full local model folders can be recreated with the training commands below.
+
+For full live inference in a fresh clone, recreate or copy these directories before using the `Single Review Check` and `Merchant Upload` tabs:
+
+- `models/bert_sentiment/`: required by the BERT sentiment classifier. The app loads it with `local_files_only=True`.
+- `models/t5_pseudo_summary_base/` or `models/t5_pseudo_summary_small/`: preferred local complaint-title generators.
+
+Without these complete local Transformer folders, the saved metrics and processed datasets remain available for inspection, but BERT-based live sentiment inference will not run until `models/bert_sentiment/` is rebuilt. Complaint-title generation can fall back to Ark, cached zero-shot T5, or local rules depending on the runtime environment.
 
 ### `src/helpfulness/`
 
 - Review-value dataset preparation and model training.
-- [prepare_helpfulness_dataset.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/helpfulness/prepare_helpfulness_dataset.py): samples Amazon reviews, cleans them, and creates the proxy label.
-- [train_helpfulness.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/helpfulness/train_helpfulness.py): trains the TF-IDF + Logistic Regression classifier.
-- [predict_helpfulness.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/helpfulness/predict_helpfulness.py): inference helper for runtime use.
+- [prepare_helpfulness_dataset.py](src/helpfulness/prepare_helpfulness_dataset.py): samples Amazon reviews, cleans them, and creates the proxy label.
+- [train_helpfulness.py](src/helpfulness/train_helpfulness.py): trains the TF-IDF + Logistic Regression classifier.
+- [predict_helpfulness.py](src/helpfulness/predict_helpfulness.py): inference helper for runtime use.
 
 ### `src/sentiment/`
 
 - Sentiment dataset calibration and BERT fine-tuning.
-- [label_calibration.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/sentiment/label_calibration.py): applies the rating + VADER rules and writes calibrated CSV splits.
-- [train_bert_sentiment.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/sentiment/train_bert_sentiment.py): fine-tunes and evaluates `bert-base-uncased`.
+- [label_calibration.py](src/sentiment/label_calibration.py): applies the rating + VADER rules and writes calibrated CSV splits.
+- [train_bert_sentiment.py](src/sentiment/train_bert_sentiment.py): fine-tunes and evaluates `bert-base-uncased`.
 
 ### `src/summarization/`
 
 - Complaint-title generation logic and T5 training.
-- [generate_pseudo_titles.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/summarization/generate_pseudo_titles.py): uses Ark as the teacher model to create pseudo labels.
-- [fine_tune_t5_pseudo.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/summarization/fine_tune_t5_pseudo.py): trains local Flan-T5 student models.
-- [train_t5.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/summarization/train_t5.py): shared title-generation evaluation utilities, including ROUGE logic.
-- [sample_zero_vs_base.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/summarization/sample_zero_vs_base.py): creates a small qualitative comparison artifact.
+- [generate_pseudo_titles.py](src/summarization/generate_pseudo_titles.py): uses Ark as the teacher model to create pseudo labels.
+- [fine_tune_t5_pseudo.py](src/summarization/fine_tune_t5_pseudo.py): trains local Flan-T5 student models.
+- [train_t5.py](src/summarization/train_t5.py): shared title-generation evaluation utilities, including ROUGE logic.
+- [sample_zero_vs_base.py](src/summarization/sample_zero_vs_base.py): creates a small qualitative comparison artifact.
 
 ### `src/preprocessing/`
 
@@ -184,7 +191,7 @@ Large Transformer model directories are kept locally for runtime use, while the 
 ### `src/visualization/`
 
 - Dashboard-side aggregation and retrieval helpers.
-- [dashboard_utils.py](/Users/zhaoyisen/AISproject/EBA5004-Group14/review-insight-system/src/visualization/dashboard_utils.py) prepares scope-level metrics, representative review retrieval, and assistant-style responses.
+- [dashboard_utils.py](src/visualization/dashboard_utils.py) prepares scope-level metrics, representative review retrieval, and assistant-style responses.
 
 ### `src/utils/`
 
