@@ -556,7 +556,7 @@ def summarize_batch(texts: tuple[str, ...]) -> list[str]:
 def render_review_cards(dataframe: pd.DataFrame) -> None:
     """Render a list of representative review cards."""
     if dataframe.empty:
-        st.info("There are no representative negative reviews in the current scope yet.")
+        st.info("There are no representative complaint candidates in the current scope yet.")
         return
 
     for _, row in dataframe.iterrows():
@@ -589,7 +589,7 @@ def render_review_cards(dataframe: pd.DataFrame) -> None:
 def render_ai_titles(dataframe: pd.DataFrame, scope_key: str) -> None:
     """Generate and render AI complaint titles for representative reviews."""
     if dataframe.empty:
-        st.info("There are no negative reviews available for AI title generation in the current scope.")
+        st.info("There are no complaint candidates available for AI title generation in the current scope.")
         return
 
     review_rows = dataframe.head(3).copy()
@@ -1077,14 +1077,14 @@ def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_ark_llm:
         if chat_snapshot["negative_reviews"] == 0:
             opening_message = (
                 f"Current scope: '{scope_label}'. It has {chat_snapshot['total_reviews']} "
-                "reviews and no calibrated negative reviews, so I should not infer complaint "
+                "reviews and no complaint candidates, so I should not infer complaint "
                 "themes here. I can still explain counts or suggest how to broaden the analysis."
             )
         elif chat_snapshot["negative_reviews"] < 3:
             negative_review_label = (
-                "calibrated negative review"
+                "complaint candidate"
                 if chat_snapshot["negative_reviews"] == 1
-                else "calibrated negative reviews"
+                else "complaint candidates"
             )
             opening_message = (
                 f"Current scope: '{scope_label}'. It has {chat_snapshot['total_reviews']} "
@@ -1095,7 +1095,7 @@ def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_ark_llm:
         else:
             opening_message = (
                 f"Current scope: '{scope_label}'. It has {chat_snapshot['total_reviews']} "
-                f"reviews and {chat_snapshot['negative_reviews']} calibrated negative reviews. "
+                f"reviews and {chat_snapshot['negative_reviews']} complaint candidates. "
                 "Ask about complaint themes, representative evidence, or merchant actions."
             )
         st.session_state["chat_messages"] = [
@@ -1169,7 +1169,7 @@ def main() -> None:
         unsafe_allow_html=True,
     )
     tip_col2.markdown(
-        '<div class="quick-tip"><strong>Step 2</strong><br/>Use Issue Explorer to inspect representative negative reviews.</div>',
+        '<div class="quick-tip"><strong>Step 2</strong><br/>Use Issue Explorer to inspect representative complaint candidates.</div>',
         unsafe_allow_html=True,
     )
     tip_col3.markdown(
@@ -1282,9 +1282,9 @@ def main() -> None:
         metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
         metric_col1.metric("Test Reviews", f"{overview_snapshot['total_reviews']:,}")
         metric_col2.metric("High-value Reviews", f"{overview_snapshot['high_value_reviews']:,}")
-        metric_col3.metric("Negative Reviews", f"{overview_snapshot['negative_reviews']:,}")
+        metric_col3.metric("Complaint Candidates", f"{overview_snapshot['negative_reviews']:,}")
         metric_col4.metric(
-            "High-value Negative",
+            "High-value Candidates",
             f"{overview_snapshot['high_value_negative_reviews']:,}",
         )
 
@@ -1311,7 +1311,8 @@ def main() -> None:
             .agg(
                 total_reviews=("review_id", "count"),
                 high_value_reviews=("review_value_label", "sum"),
-                negative_reviews=("sentiment_label", lambda series: int((series == "negative").sum())),
+                negative_reviews=("is_complaint_candidate", "sum"),
+                calibrated_negative_reviews=("is_calibrated_negative", "sum"),
                 avg_rating=("rating", "mean"),
             )
             .reset_index()
@@ -1323,7 +1324,8 @@ def main() -> None:
                 "category": "Category",
                 "total_reviews": "Reviews",
                 "high_value_reviews": "High-value Reviews",
-                "negative_reviews": "Negative Reviews",
+                "negative_reviews": "Complaint Candidates",
+                "calibrated_negative_reviews": "Calibrated Negative",
                 "avg_rating": "Average Rating",
             }
         )
@@ -1331,14 +1333,14 @@ def main() -> None:
 
     with tab_explorer:
         st.caption(
-            "Issue Explorer helps you inspect representative negative reviews, their "
+            "Issue Explorer helps you inspect representative complaint candidates, their "
             "common complaint keywords, and AI-generated complaint titles."
         )
         scope_info_col, scope_metric2, scope_metric3, scope_metric4 = st.columns([1.55, 1, 1, 1])
         scope_info_col.markdown("**Current Scope**")
         scope_info_col.write(scope_label)
         scope_metric2.metric("Reviews", f"{scope_snapshot['total_reviews']:,}")
-        scope_metric3.metric("Negative", f"{scope_snapshot['negative_reviews']:,}")
+        scope_metric3.metric("Candidates", f"{scope_snapshot['negative_reviews']:,}")
         scope_metric4.metric(
             "Verified Purchase Rate",
             f"{scope_snapshot['verified_purchase_rate']:.0%}",
@@ -1365,15 +1367,18 @@ def main() -> None:
                     Average rating: {scope_snapshot['average_rating']:.2f}<br/>
                     High-value reviews: {scope_snapshot['high_value_reviews']}<br/>
                     Calibrated sentiment reviews: {scope_snapshot['calibrated_sentiment_reviews']}<br/>
-                    High-value negative reviews: {scope_snapshot['high_value_negative_reviews']}
+                    Calibrated negative reviews: {scope_snapshot['calibrated_negative_reviews']}<br/>
+                    High-value complaint candidates: {scope_snapshot['high_value_negative_reviews']}
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
         with review_col:
-            st.markdown("**Representative Negative Reviews**")
-            negative_reviews = scope_dataframe[scope_dataframe["sentiment_label"] == "negative"]
+            st.markdown("**Representative Complaint Candidates**")
+            negative_reviews = scope_dataframe[
+                scope_dataframe["is_complaint_candidate"].fillna(False)
+            ]
             representative_reviews = (
                 scope_snapshot["representative_reviews"]
                 if not scope_snapshot["representative_reviews"].empty

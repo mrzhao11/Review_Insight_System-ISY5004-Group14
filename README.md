@@ -21,7 +21,7 @@ This project targets three tasks:
 2. Sentiment classification (`positive` vs `negative`)
 3. Complaint title generation for negative reviews
 
-The dashboard supports category/product filtering, representative negative review inspection, single-review inference, merchant CSV upload, and assistant-style Q&A.
+The dashboard supports category/product filtering, representative complaint-candidate inspection, single-review inference, merchant CSV upload, and assistant-style Q&A.
 
 ## End-To-End Workflow
 
@@ -64,7 +64,8 @@ Overview counts:
 | Total processed reviews | 10,000 |
 | High-value reviews | 1,250 |
 | Calibrated negative reviews | 800 |
-| High-value negative reviews | 118 |
+| Dashboard complaint candidates | 2,133 |
+| High-value complaint candidates | 306 |
 | Pseudo title pairs | 800 |
 
 ## Current Model Results
@@ -81,7 +82,7 @@ Overview counts:
 The Streamlit app is designed as the final system surface rather than a separate demo page. It brings the processed data and trained models into one workflow:
 
 1. `Business Overview`: shows key metrics, scope-level counts, category distributions, and summary business indicators.
-2. `Issue Explorer`: lets the user inspect representative negative reviews and generated complaint titles under a selected category or product.
+2. `Issue Explorer`: lets the user inspect representative complaint candidates and generated complaint titles under a selected category or product.
 3. `Single Review Check`: runs the full pipeline on one pasted review, including value classification, sentiment prediction, and complaint-title generation.
 4. `Merchant Upload`: allows batch analysis of a merchant CSV file with local pipeline inference.
 5. `Merchant Copilot`: provides assistant-style responses grounded in the selected review scope, with Ark API support when available.
@@ -329,5 +330,6 @@ If `google/flan-t5-small` is not cached locally, append `--allow-download`.
 
 - `review_value_label` is a proxy (`helpful_votes >= 2`), not a human gold quality label.
 - Sentiment labels are calibrated with rating + VADER compound thresholds (positive >= 0.05, negative <= -0.05), not manual annotations.
+- Dashboard complaint candidates use a broader exploration pool (`calibrated negative` or `rating <= 3`) so product-level issue exploration is not too sparse; sentiment metrics still use the calibrated sentiment labels.
 - Complaint-title targets are LLM-generated pseudo labels, not human-written gold titles.
 - Title-generation results should be interpreted as demo-oriented effectiveness, not large-scale production validation.
