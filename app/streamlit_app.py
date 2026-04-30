@@ -164,6 +164,35 @@ def inject_styles() -> None:
             color: #1e293b;
             line-height: 1.55;
         }
+        .inline-expander {
+            margin-top: 0.65rem;
+            padding-top: 0.55rem;
+            border-top: 1px solid #ebeff8;
+        }
+        .inline-expander summary {
+            cursor: pointer;
+            color: #0b66c3;
+            font-weight: 650;
+            font-size: 0.92rem;
+            list-style: none;
+        }
+        .inline-expander summary::-webkit-details-marker {
+            display: none;
+        }
+        .inline-expander summary::before {
+            content: ">";
+            display: inline-block;
+            margin-right: 0.45rem;
+            color: #64748b;
+            transition: transform 0.15s ease;
+        }
+        .inline-expander[open] summary::before {
+            transform: rotate(90deg);
+        }
+        .full-review-body {
+            margin-top: 0.55rem;
+            color: #334155;
+        }
         .quick-tip {
             background: #ffffff;
             border: 1px solid #dbe3f1;
@@ -563,20 +592,31 @@ def render_review_cards(dataframe: pd.DataFrame) -> None:
         return
 
     for _, row in dataframe.iterrows():
-        excerpt = str(row.get("clean_review_text", "")).strip()
-        if len(excerpt) > 260:
-            excerpt = excerpt[:257] + "..."
+        full_review = str(row.get("clean_review_text", "")).strip()
+        excerpt = full_review
+        needs_expander = len(full_review) > 360
+        if needs_expander:
+            excerpt = full_review[:357].rstrip() + "..."
+        details_html = ""
+        if needs_expander:
+            details_html = f"""
+                <details class="inline-expander">
+                    <summary>Read full review</summary>
+                    <div class="review-body full-review-body">{escape(full_review)}</div>
+                </details>
+            """
         title = str(row.get("clean_review_title", "")).strip() or "Untitled review"
         st.markdown(
             f"""
             <div class="review-card">
-                <div class="review-title">{title}</div>
+                <div class="review-title">{escape(title)}</div>
                 <div class="review-meta">
                     Rating {float(row.get("rating", 0)):.1f}
                     | Helpful votes {int(row.get("helpful_votes", 0))}
                     | Value label {int(row.get("review_value_label", 0))}
                 </div>
-                <div class="review-body">{excerpt}</div>
+                <div class="review-body">{escape(excerpt)}</div>
+                {details_html}
             </div>
             """,
             unsafe_allow_html=True,
@@ -605,15 +645,77 @@ def render_ai_titles(dataframe: pd.DataFrame, scope_key: str) -> None:
         return
 
     for generated_title, (_, row) in zip(titles, review_rows.iterrows()):
+        source_review = str(row.get("clean_review_text", "")).strip()
+        source_preview = source_review
+        needs_expander = len(source_review) > 360
+        if needs_expander:
+            source_preview = source_review[:357].rstrip() + "..."
+        details_html = ""
+        if needs_expander:
+            details_html = f"""
+                <details class="inline-expander">
+                    <summary>Read full review</summary>
+                    <div class="review-body full-review-body">{escape(source_review)}</div>
+                </details>
+            """
         st.markdown(
             f"""
             <div class="section-card" style="margin-bottom:0.7rem;">
-                <strong>AI title:</strong> {generated_title}<br/>
-                <span style="color:#7b6c5e;">Reference title:</span> {row.get("clean_review_title", "N/A")}
+                <strong>AI title:</strong> {escape(str(generated_title))}<br/>
+                <span style="color:#7b6c5e;">Reference title:</span> {escape(str(row.get("clean_review_title", "N/A")))}<br/>
+                <span style="color:#7b6c5e;">Original review:</span>
+                <div class="review-body" style="margin-top:0.35rem;">{escape(source_preview)}</div>
+                {details_html}
             </div>
             """,
             unsafe_allow_html=True,
         )
+
+
+def render_manual_title_generator(scope_key: str) -> None:
+    """Render a small manual complaint-title inference panel."""
+    st.markdown("**Manual Complaint Title Inference**")
+    st.caption("Paste a negative review and generate a short complaint title with the title model.")
+
+    input_key = f"manual_title_input_{scope_key}"
+    result_key = f"manual_title_result_{scope_key}"
+    review_text = st.text_area(
+        "Paste review for title generation",
+        height=140,
+        placeholder="Paste a negative customer review here...",
+        key=input_key,
+    )
+
+    if st.button(
+        "Generate Complaint Title",
+        type="primary",
+        key=f"manual_title_button_{scope_key}",
+    ):
+        cleaned_text = clean_text(review_text)
+        if not cleaned_text:
+            st.warning("Please paste a review before generating a title.")
+            st.session_state.pop(result_key, None)
+        else:
+            with st.spinner("Generating a complaint title..."):
+                st.session_state[result_key] = {
+                    "review": cleaned_text,
+                    "title": summarize_issue(cleaned_text),
+                }
+
+    result = st.session_state.get(result_key)
+    if not result:
+        return
+
+    st.markdown(
+        f"""
+        <div class="section-card" style="margin-top:0.7rem;">
+            <strong>Generated title:</strong> {escape(str(result["title"]))}<br/>
+            <span style="color:#7b6c5e;">Input review:</span>
+            <div class="review-body" style="margin-top:0.35rem;">{escape(str(result["review"]))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_live_analyzer() -> None:
@@ -1249,9 +1351,6 @@ def main() -> None:
         )
         st.dataframe(category_table, width="stretch", hide_index=True)
 
-        st.markdown("**Generated Complaint Title Samples**")
-        render_summary_samples(metrics["summary_samples"].get("test", []))
-
     with tab_explorer:
         st.caption(
             "Issue Explorer helps you inspect representative negative reviews, their "
@@ -1306,6 +1405,7 @@ def main() -> None:
 
         st.markdown("**AI Complaint Titles**")
         render_ai_titles(negative_reviews, scope_key)
+        render_manual_title_generator(scope_key)
 
     with tab_live:
         render_live_analyzer()
