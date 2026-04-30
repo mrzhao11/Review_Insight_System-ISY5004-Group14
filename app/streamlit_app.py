@@ -144,11 +144,8 @@ def inject_styles() -> None:
         }
         .review-card {
             border-left: 4px solid #d33f49;
-            padding: 0.9rem 1rem;
-            border-radius: 8px;
-            background: #ffffff;
-            border: 1px solid #ebeff8;
-            margin-bottom: 0.8rem;
+            padding: 0.1rem 0 0.1rem 0.85rem;
+            margin-bottom: 0.15rem;
         }
         .review-title {
             font-weight: 700;
@@ -163,35 +160,6 @@ def inject_styles() -> None:
         .review-body {
             color: #1e293b;
             line-height: 1.55;
-        }
-        .inline-expander {
-            margin-top: 0.65rem;
-            padding-top: 0.55rem;
-            border-top: 1px solid #ebeff8;
-        }
-        .inline-expander summary {
-            cursor: pointer;
-            color: #0b66c3;
-            font-weight: 650;
-            font-size: 0.92rem;
-            list-style: none;
-        }
-        .inline-expander summary::-webkit-details-marker {
-            display: none;
-        }
-        .inline-expander summary::before {
-            content: ">";
-            display: inline-block;
-            margin-right: 0.45rem;
-            color: #64748b;
-            transition: transform 0.15s ease;
-        }
-        .inline-expander[open] summary::before {
-            transform: rotate(90deg);
-        }
-        .full-review-body {
-            margin-top: 0.55rem;
-            color: #334155;
         }
         .quick-tip {
             background: #ffffff;
@@ -597,30 +565,25 @@ def render_review_cards(dataframe: pd.DataFrame) -> None:
         needs_expander = len(full_review) > 360
         if needs_expander:
             excerpt = full_review[:357].rstrip() + "..."
-        details_html = ""
-        if needs_expander:
-            details_html = f"""
-                <details class="inline-expander">
-                    <summary>Read full review</summary>
-                    <div class="review-body full-review-body">{escape(full_review)}</div>
-                </details>
-            """
         title = str(row.get("clean_review_title", "")).strip() or "Untitled review"
-        st.markdown(
-            f"""
-            <div class="review-card">
-                <div class="review-title">{escape(title)}</div>
-                <div class="review-meta">
-                    Rating {float(row.get("rating", 0)):.1f}
-                    | Helpful votes {int(row.get("helpful_votes", 0))}
-                    | Value label {int(row.get("review_value_label", 0))}
+        with st.container(border=True):
+            st.markdown(
+                f"""
+                <div class="review-card">
+                    <div class="review-title">{escape(title)}</div>
+                    <div class="review-meta">
+                        Rating {float(row.get("rating", 0)):.1f}
+                        | Helpful votes {int(row.get("helpful_votes", 0))}
+                        | Value label {int(row.get("review_value_label", 0))}
+                    </div>
+                    <div class="review-body">{escape(excerpt)}</div>
                 </div>
-                <div class="review-body">{escape(excerpt)}</div>
-                {details_html}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+                """,
+                unsafe_allow_html=True,
+            )
+            if needs_expander:
+                with st.expander("Read full review"):
+                    st.write(full_review)
 
 
 def render_ai_titles(dataframe: pd.DataFrame, scope_key: str) -> None:
@@ -650,26 +613,19 @@ def render_ai_titles(dataframe: pd.DataFrame, scope_key: str) -> None:
         needs_expander = len(source_review) > 360
         if needs_expander:
             source_preview = source_review[:357].rstrip() + "..."
-        details_html = ""
-        if needs_expander:
-            details_html = f"""
-                <details class="inline-expander">
-                    <summary>Read full review</summary>
-                    <div class="review-body full-review-body">{escape(source_review)}</div>
-                </details>
-            """
-        st.markdown(
-            f"""
-            <div class="section-card" style="margin-bottom:0.7rem;">
+        with st.container(border=True):
+            st.markdown(
+                f"""
                 <strong>AI title:</strong> {escape(str(generated_title))}<br/>
                 <span style="color:#7b6c5e;">Reference title:</span> {escape(str(row.get("clean_review_title", "N/A")))}<br/>
                 <span style="color:#7b6c5e;">Original review:</span>
                 <div class="review-body" style="margin-top:0.35rem;">{escape(source_preview)}</div>
-                {details_html}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+                """,
+                unsafe_allow_html=True,
+            )
+            if needs_expander:
+                with st.expander("Read full review"):
+                    st.write(source_review)
 
 
 def render_manual_title_generator(scope_key: str) -> None:
