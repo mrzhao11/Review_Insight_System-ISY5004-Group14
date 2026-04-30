@@ -81,6 +81,7 @@ STOPWORDS = {
     "made",
     "make",
     "makes",
+    "maybe",
     "my",
     "no",
     "not",
@@ -131,9 +132,11 @@ QUESTION_KEYWORDS = {
     "count": {"多少", "几条", "数量", "count", "how many", "总数"},
     "problem": {"问题", "抱怨", "主要", "痛点", "complaint", "issue", "problem"},
     "example": {"例子", "举例", "评论", "example", "review", "sample"},
-    "summary": {"总结", "概括", "summary", "brief", "overview"},
+    "summary": {"总结", "概括", "summary", "summarize", "brief", "overview", "evidence"},
     "product": {"商品", "产品", "product", "asin", "category", "类目"},
+    "action": {"建议", "行动", "改进", "next", "action", "recommend", "suggest", "check"},
 }
+GREETING_TERMS = {"hi", "hello", "hey", "你好", "您好"}
 
 
 def _read_split_csvs(prefix: str, processed_dir: Path) -> pd.DataFrame:
@@ -321,11 +324,91 @@ def _format_review_bullets(dataframe: pd.DataFrame, *, include_excerpt: bool = T
         if len(excerpt) > 140:
             excerpt = excerpt[:137] + "..."
         title = str(row.get("clean_review_title", "")).strip() or "Untitled review"
+        if title.lower() in {"no", "n/a", "na", "none", "null"}:
+            title = "Untitled review"
         line = f"- {title}"
         if include_excerpt and excerpt:
             line += f": {excerpt}"
         lines.append(line)
     return "\n".join(lines)
+
+
+def _plural(count: int, singular: str, plural: str | None = None) -> str:
+    """Return a count with a simple English singular/plural label."""
+    label = singular if count == 1 else (plural or f"{singular}s")
+    return f"{count} {label}"
+
+
+def _evidence_note(snapshot: Dict[str, Any]) -> str:
+    """Return an evidence warning based on negative-review support."""
+    negative_count = snapshot["negative_reviews"]
+    if negative_count == 0:
+        return (
+            "No calibrated negative reviews are available in this scope, so complaint "
+            "analysis is not reliable here."
+        )
+    if negative_count == 1:
+        return (
+            "Evidence is limited to 1 calibrated negative review, so this should be "
+            "treated as one customer case rather than a recurring complaint theme."
+        )
+    if negative_count < 3:
+        return (
+            f"Evidence is limited to {negative_count} calibrated negative reviews, so "
+            "the result should be read as weak evidence rather than a stable trend."
+        )
+    return ""
+
+
+def _format_available_negative_evidence(snapshot: Dict[str, Any], limit: int = 3) -> str:
+    """Format the available negative-review evidence for sparse scopes."""
+    representative = snapshot["representative_reviews"]
+    if representative.empty:
+        return "- No calibrated negative review evidence is available in this scope."
+    return _format_review_bullets(representative.head(limit), include_excerpt=True)
+
+
+def _count_answer(snapshot: Dict[str, Any], scope_label: str) -> str:
+    """Answer count-style questions with explicit evidence boundaries."""
+    note = _evidence_note(snapshot)
+    answer = (
+        f"The current scope is '{scope_label}'. It contains "
+        f"{_plural(snapshot['total_reviews'], 'review')}, "
+        f"{_plural(snapshot['calibrated_sentiment_reviews'], 'calibrated sentiment review')}, "
+        f"{_plural(snapshot['negative_reviews'], 'calibrated negative review')}, and "
+        f"{_plural(snapshot['high_value_negative_reviews'], 'high-value negative review')}."
+    )
+    return f"{answer}\n\nEvidence note: {note}" if note else answer
+
+
+def _action_answer(snapshot: Dict[str, Any], scope_label: str) -> str:
+    """Suggest merchant actions without overstating sparse evidence."""
+    note = _evidence_note(snapshot)
+    keyword_text = ", ".join(keyword for keyword, _ in snapshot["top_keywords"][:3])
+    if snapshot["negative_reviews"] == 0:
+        return (
+            f"For '{scope_label}', I would not draw complaint conclusions yet because "
+            "there are no calibrated negative reviews in the current scope.\n\n"
+            "Practical next steps: broaden the scope to the category, inspect uploaded "
+            "merchant reviews if available, or use Single Review Check for new customer feedback."
+        )
+    if snapshot["negative_reviews"] < 3:
+        issue_hint = keyword_text or "the available negative review text"
+        return (
+            f"For '{scope_label}', use the available negative review as a case-level signal, "
+            "not as proof of a recurring product issue.\n\n"
+            f"Evidence note: {note}\n\n"
+            f"Suggested next checks: read the full negative review, verify whether '{issue_hint}' "
+            "appears in more reviews at category level, and check whether the product page, "
+            "instructions, or support content can address that specific customer pain point."
+        )
+
+    keyword_text = keyword_text or "the top complaint keywords"
+    return (
+        f"For '{scope_label}', the negative-review evidence is large enough for a broader "
+        f"scan. Start with the recurring terms ({keyword_text}), inspect representative "
+        "reviews, and prioritise fixes that appear across multiple reviews."
+    )
 
 
 def _retrieve_reviews_for_question(question: str, dataframe: pd.DataFrame, limit: int = 2) -> pd.DataFrame:
@@ -360,17 +443,22 @@ def _build_context_prompt(snapshot: Dict[str, Any], question: str) -> str:
     """Convert dashboard context into a compact prompt for Ark LLM use."""
     keyword_text = ", ".join(keyword for keyword, _ in snapshot["top_keywords"][:6]) or "none"
     review_bullets = _format_review_bullets(snapshot["representative_reviews"])
+    evidence_note = _evidence_note(snapshot) or "There is enough negative-review evidence for theme-level discussion."
     return (
         "You are an intelligent review analytics assistant for an e-commerce merchant. "
         "Use only the supplied dashboard context; do not invent products, counts, or reviews. "
-        "Answer in the same language as the user's question. If the user asks for advice, "
-        "give concise, practical merchant actions. If evidence is limited, say so clearly.\n\n"
+        "Answer in the same language as the user's question. Follow this evidence policy: "
+        "when there are fewer than 3 negative reviews, do not call the result a recurring "
+        "theme or broad product problem. Frame it as available evidence or a case-level "
+        "signal. If the user asks for more examples than exist, say how many are available. "
+        "If the user asks for advice, give concise checks that match the evidence level.\n\n"
         f"Scope: {snapshot['scope_label']}\n"
         f"Total reviews: {snapshot['total_reviews']}\n"
         f"High-value reviews: {snapshot['high_value_reviews']}\n"
         f"Calibrated sentiment reviews: {snapshot['calibrated_sentiment_reviews']}\n"
         f"Negative reviews: {snapshot['negative_reviews']}\n"
         f"High-value negative reviews: {snapshot['high_value_negative_reviews']}\n"
+        f"Evidence note: {evidence_note}\n"
         f"Average rating: {snapshot['average_rating']:.2f}\n"
         f"Unique products: {snapshot['unique_products']}\n"
         f"Top complaint keywords: {keyword_text}\n"
@@ -416,28 +504,48 @@ def answer_chat_question(
 ) -> str:
     """Answer a chat question with Ark LLM and local-rule fallback."""
     snapshot = build_scope_snapshot(dataframe, scope_label=scope_label)
-    if use_ark_llm:
-        llm_answer = _answer_with_ark(snapshot, question)
-        if llm_answer:
-            return llm_answer
 
     if snapshot["total_reviews"] == 0:
         return "There is no data in the current scope yet. Try switching the category or product."
 
     lowered = question.lower()
+    compact_question = re.sub(r"[^\w\u4e00-\u9fff]+", " ", lowered).strip()
     top_keywords = [keyword for keyword, _ in snapshot["top_keywords"]]
     representative = snapshot["representative_reviews"]
+    evidence_note = _evidence_note(snapshot)
 
-    if any(keyword in lowered for keyword in QUESTION_KEYWORDS["count"]):
+    if compact_question in GREETING_TERMS:
+        if evidence_note:
+            return (
+                f"Hi. You are viewing '{scope_label}'. This scope has "
+                f"{_plural(snapshot['total_reviews'], 'review')} and "
+                f"{_plural(snapshot['negative_reviews'], 'calibrated negative review')}.\n\n"
+                f"{evidence_note}\n\n"
+                "I can help inspect available evidence, explain counts, or suggest what to check next."
+            )
         return (
-            f"The current scope is '{scope_label}'. It contains {snapshot['total_reviews']} reviews, "
-            f"including {snapshot['high_value_reviews']} high-value reviews, "
-            f"{snapshot['calibrated_sentiment_reviews']} sentiment-labeled reviews, "
-            f"{snapshot['negative_reviews']} negative reviews, and "
-            f"{snapshot['high_value_negative_reviews']} high-value negative reviews."
+            f"Hi. You are viewing '{scope_label}'. I can help summarize complaint themes, "
+            "show representative negative reviews, or suggest merchant actions."
         )
 
+    if any(keyword in lowered for keyword in QUESTION_KEYWORDS["count"]):
+        return _count_answer(snapshot, scope_label)
+
     if any(keyword in lowered for keyword in QUESTION_KEYWORDS["problem"]):
+        if snapshot["negative_reviews"] == 0:
+            return (
+                f"I cannot identify complaint themes for '{scope_label}' because there are "
+                "no calibrated negative reviews in this scope. Try broadening to the category "
+                "or checking uploaded merchant reviews."
+            )
+        if snapshot["negative_reviews"] < 3:
+            keyword_text = ", ".join(top_keywords[:3]) if top_keywords else "no clear repeated terms"
+            return (
+                f"For '{scope_label}', I would not call these 'main themes' yet. "
+                f"{evidence_note}\n\n"
+                f"Available issue signal: {keyword_text}.\n"
+                f"Evidence:\n{_format_available_negative_evidence(snapshot, limit=2)}"
+            )
         keyword_text = ", ".join(top_keywords[:5]) if top_keywords else "no clear recurring complaint terms yet"
         bullet_text = _format_review_bullets(representative.head(2), include_excerpt=False)
         return (
@@ -446,11 +554,33 @@ def answer_chat_question(
         )
 
     if any(keyword in lowered for keyword in QUESTION_KEYWORDS["example"]):
+        if snapshot["negative_reviews"] == 0:
+            return "There are no calibrated negative review examples in the current scope."
+        if snapshot["negative_reviews"] < 3:
+            verb = "is" if snapshot["negative_reviews"] == 1 else "are"
+            return (
+                f"Only {_plural(snapshot['negative_reviews'], 'calibrated negative review')} {verb} "
+                f"available in '{scope_label}', so I can show the available evidence rather "
+                f"than multiple representative examples:\n"
+                f"{_format_available_negative_evidence(snapshot, limit=3)}"
+            )
         review_examples = _format_review_bullets(representative, include_excerpt=True)
         return review_examples or "There are no representative review examples in the current scope yet."
 
     if any(keyword in lowered for keyword in QUESTION_KEYWORDS["summary"]):
         keyword_text = ", ".join(top_keywords[:5]) if top_keywords else "no clear complaint keywords"
+        if evidence_note:
+            evidence_text = ""
+            if snapshot["negative_reviews"] > 0:
+                evidence_text = f"\n\nEvidence:\n{_format_available_negative_evidence(snapshot, limit=2)}"
+            return (
+                f"At a glance, '{scope_label}' has {snapshot['total_reviews']} reviews, "
+                f"an average rating of {snapshot['average_rating']:.2f}, and "
+                f"{_plural(snapshot['negative_reviews'], 'calibrated negative review')}.\n\n"
+                f"{evidence_note}\n\n"
+                f"Available negative signal: {keyword_text}."
+                f"{evidence_text}"
+            )
         return (
             f"At a glance, '{scope_label}' has an average rating of {snapshot['average_rating']:.2f}, "
             f"a high-value review share of "
@@ -465,8 +595,22 @@ def answer_chat_question(
             f"{snapshot['average_rating']:.2f}."
         )
 
+    if any(keyword in lowered for keyword in QUESTION_KEYWORDS["action"]):
+        return _action_answer(snapshot, scope_label)
+
+    if use_ark_llm:
+        llm_answer = _answer_with_ark(snapshot, question)
+        if llm_answer:
+            return llm_answer
+
     retrieved = _retrieve_reviews_for_question(question, dataframe[dataframe["sentiment_label"] == "negative"])
     if not retrieved.empty:
+        if evidence_note:
+            return (
+                f"{evidence_note}\n\n"
+                f"Available negative review evidence in '{scope_label}':\n"
+                f"{_format_review_bullets(retrieved, include_excerpt=True)}"
+            )
         return (
             f"I found the following negative reviews that are most relevant to your question in '{scope_label}':\n"
             f"{_format_review_bullets(retrieved, include_excerpt=True)}"
@@ -483,7 +627,7 @@ def answer_chat_question(
 def get_chat_suggestions(scope_label: str) -> List[str]:
     """Return a short list of chat prompt suggestions."""
     return [
-        f"How many high-value negative reviews are in {scope_label}?",
-        f"What are the main complaint themes in {scope_label}?",
-        "Show me two representative negative review examples.",
+        "Summarize available negative evidence",
+        "Show available negative reviews",
+        "What should the merchant check next?",
     ]

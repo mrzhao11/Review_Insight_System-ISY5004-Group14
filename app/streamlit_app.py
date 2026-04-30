@@ -1052,8 +1052,9 @@ def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_ark_llm:
         "Ask about the current category or product. Ark LLM can answer with richer "
         "merchant recommendations when configured; local rules remain available as fallback."
     )
+    chat_snapshot = build_scope_snapshot(scope_dataframe, scope_label=scope_label)
 
-    chat_ui_version = "assistant_en_v4"
+    chat_ui_version = "assistant_en_v5"
     if st.session_state.get("chat_ui_version") != chat_ui_version:
         st.session_state["chat_ui_version"] = chat_ui_version
         st.session_state["chat_scope_key"] = None
@@ -1073,13 +1074,34 @@ def render_chat(scope_dataframe: pd.DataFrame, *, scope_label: str, use_ark_llm:
     scope_key = scope_label
     if st.session_state.get("chat_scope_key") != scope_key:
         st.session_state["chat_scope_key"] = scope_key
+        if chat_snapshot["negative_reviews"] == 0:
+            opening_message = (
+                f"Current scope: '{scope_label}'. It has {chat_snapshot['total_reviews']} "
+                "reviews and no calibrated negative reviews, so I should not infer complaint "
+                "themes here. I can still explain counts or suggest how to broaden the analysis."
+            )
+        elif chat_snapshot["negative_reviews"] < 3:
+            negative_review_label = (
+                "calibrated negative review"
+                if chat_snapshot["negative_reviews"] == 1
+                else "calibrated negative reviews"
+            )
+            opening_message = (
+                f"Current scope: '{scope_label}'. It has {chat_snapshot['total_reviews']} "
+                f"reviews and only {chat_snapshot['negative_reviews']} {negative_review_label}, "
+                "so I will treat the evidence as case-level feedback rather than "
+                "a stable complaint trend."
+            )
+        else:
+            opening_message = (
+                f"Current scope: '{scope_label}'. It has {chat_snapshot['total_reviews']} "
+                f"reviews and {chat_snapshot['negative_reviews']} calibrated negative reviews. "
+                "Ask about complaint themes, representative evidence, or merchant actions."
+            )
         st.session_state["chat_messages"] = [
             {
                 "role": "assistant",
-                "content": (
-                    f"You are currently viewing '{scope_label}'. "
-                    "Ask about review counts, complaint themes, risky products, or recommended actions."
-                ),
+                "content": opening_message,
             }
         ]
 
