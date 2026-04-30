@@ -18,6 +18,7 @@ except ImportError:  # pragma: no cover - optional dependency at runtime
 
 ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
 ARK_DEMO_MODEL = "doubao-seed-2-0-lite-260215"
+COMPLAINT_RATING_THRESHOLD = 3
 
 NUMERIC_COLUMNS = {
     "rating",
@@ -41,6 +42,8 @@ STOPWORDS = {
     "are",
     "as",
     "at",
+    "also",
+    "back",
     "be",
     "because",
     "been",
@@ -50,8 +53,10 @@ STOPWORDS = {
     "by",
     "can",
     "did",
+    "didn't",
     "do",
     "does",
+    "doesn't",
     "doing",
     "don",
     "down",
@@ -61,6 +66,10 @@ STOPWORDS = {
     "for",
     "from",
     "get",
+    "go",
+    "going",
+    "good",
+    "great",
     "got",
     "had",
     "has",
@@ -77,19 +86,25 @@ STOPWORDS = {
     "just",
     "it's",
     "like",
+    "little",
     "look",
     "made",
     "make",
     "makes",
     "maybe",
+    "more",
+    "much",
     "my",
+    "nice",
     "no",
     "not",
     "of",
     "off",
+    "only",
     "on",
     "one",
     "or",
+    "other",
     "out",
     "product",
     "really",
@@ -101,6 +116,7 @@ STOPWORDS = {
     "still",
     "such",
     "that",
+    "than",
     "the",
     "their",
     "them",
@@ -109,6 +125,7 @@ STOPWORDS = {
     "these",
     "they",
     "this",
+    "time",
     "to",
     "too",
     "tried",
@@ -123,6 +140,8 @@ STOPWORDS = {
     "what",
     "when",
     "which",
+    "will",
+    "well",
     "with",
     "would",
     "you",
@@ -131,17 +150,7 @@ STOPWORDS = {
 QUESTION_KEYWORDS = {
     "count": {"多少", "几条", "数量", "count", "how many", "总数"},
     "problem": {"问题", "抱怨", "主要", "痛点", "complaint", "issue", "problem"},
-    "example": {
-        "例子",
-        "举例",
-        "评论",
-        "candidate",
-        "candidates",
-        "example",
-        "review",
-        "sample",
-        "show",
-    },
+    "example": {"例子", "举例", "评论", "example", "review", "sample"},
     "summary": {"总结", "概括", "summary", "summarize", "brief", "overview", "evidence"},
     "product": {"商品", "产品", "product", "asin", "category", "类目"},
     "action": {"建议", "行动", "改进", "next", "action", "recommend", "suggest", "check"},
@@ -180,24 +189,6 @@ def _top_keywords(texts: List[str], *, limit: int = 8) -> List[Tuple[str, int]]:
     return ranked[:limit]
 
 
-def _complaint_candidate_mask(dataframe: pd.DataFrame) -> pd.Series:
-    """Return business-facing complaint candidates for dashboard exploration."""
-    if dataframe.empty:
-        return pd.Series(dtype=bool, index=dataframe.index)
-
-    sentiment_label = dataframe.get(
-        "sentiment_label",
-        pd.Series(["unlabeled"] * len(dataframe), index=dataframe.index),
-    )
-    rating = pd.to_numeric(
-        dataframe.get("rating", pd.Series([None] * len(dataframe), index=dataframe.index)),
-        errors="coerce",
-    )
-    calibrated_negative = sentiment_label.fillna("unlabeled").eq("negative")
-    low_rating = rating.le(3.0).fillna(False)
-    return calibrated_negative | low_rating
-
-
 def _select_representative_reviews(dataframe: pd.DataFrame, limit: int = 3) -> pd.DataFrame:
     """Pick representative reviews for display or chat context."""
     if dataframe.empty:
@@ -213,6 +204,29 @@ def _select_representative_reviews(dataframe: pd.DataFrame, limit: int = 3) -> p
         ascending=[False, False, False, True],
     )
     return ranked.head(limit)
+
+
+def complaint_candidate_mask(dataframe: pd.DataFrame) -> pd.Series:
+    """Return rows worth inspecting for dashboard complaint exploration."""
+    if dataframe.empty:
+        return pd.Series(False, index=dataframe.index)
+
+    calibrated_negative = (
+        dataframe["sentiment_label"].fillna("unlabeled").astype(str).str.lower() == "negative"
+        if "sentiment_label" in dataframe.columns
+        else pd.Series(False, index=dataframe.index)
+    )
+    low_rating = (
+        pd.to_numeric(dataframe["rating"], errors="coerce") <= COMPLAINT_RATING_THRESHOLD
+        if "rating" in dataframe.columns
+        else pd.Series(False, index=dataframe.index)
+    )
+    return calibrated_negative | low_rating.fillna(False)
+
+
+def get_complaint_candidates(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Return the broader dashboard complaint-candidate pool."""
+    return dataframe[complaint_candidate_mask(dataframe)].copy()
 
 
 def filter_scope_dataframe(
@@ -237,11 +251,11 @@ def build_scope_snapshot(dataframe: pd.DataFrame, *, scope_label: str) -> Dict[s
     """Create summary statistics for the current dashboard scope."""
     sentiment_rows = dataframe[dataframe["sentiment_label"] != "unlabeled"]
     calibrated_negative_rows = sentiment_rows[sentiment_rows["sentiment_label"] == "negative"]
-    complaint_rows = dataframe[_complaint_candidate_mask(dataframe)]
-    high_value_negative = complaint_rows[complaint_rows["review_value_label"] == 1]
+    complaint_rows = get_complaint_candidates(dataframe)
+    high_value_complaints = complaint_rows[complaint_rows["review_value_label"] == 1]
     top_keywords = _top_keywords(complaint_rows["clean_review_text"].fillna("").tolist())
     representative = _select_representative_reviews(
-        high_value_negative if not high_value_negative.empty else complaint_rows,
+        high_value_complaints if not high_value_complaints.empty else complaint_rows,
         limit=3,
     )
 
@@ -250,9 +264,11 @@ def build_scope_snapshot(dataframe: pd.DataFrame, *, scope_label: str) -> Dict[s
         "total_reviews": int(len(dataframe)),
         "high_value_reviews": int((dataframe["review_value_label"] == 1).sum()),
         "calibrated_sentiment_reviews": int(len(sentiment_rows)),
-        "negative_reviews": int(len(complaint_rows)),
         "calibrated_negative_reviews": int(len(calibrated_negative_rows)),
-        "high_value_negative_reviews": int(len(high_value_negative)),
+        "negative_reviews": int(len(complaint_rows)),
+        "complaint_candidates": int(len(complaint_rows)),
+        "high_value_negative_reviews": int(len(high_value_complaints)),
+        "high_value_complaint_candidates": int(len(high_value_complaints)),
         "verified_purchase_rate": float(
             dataframe["verified_purchase"].fillna(False).mean() if len(dataframe) else 0.0
         ),
@@ -280,23 +296,7 @@ def build_dashboard_payload(processed_dir: Path | str = Path("data/processed")) 
     merged_reviews["sentiment_label"] = merged_reviews["sentiment_label"].fillna("unlabeled")
     merged_reviews["sentiment_target"] = merged_reviews["sentiment_target"].fillna(-1)
     merged_reviews["lex_score"] = merged_reviews["lex_score"].fillna(0.0)
-    merged_reviews["is_calibrated_negative"] = merged_reviews["sentiment_label"].eq("negative")
-    merged_reviews["is_low_rating_review"] = pd.to_numeric(
-        merged_reviews["rating"],
-        errors="coerce",
-    ).le(3.0).fillna(False)
-    merged_reviews["is_complaint_candidate"] = (
-        merged_reviews["is_calibrated_negative"] | merged_reviews["is_low_rating_review"]
-    )
-    merged_reviews["complaint_signal_source"] = "not complaint candidate"
-    merged_reviews.loc[
-        merged_reviews["is_low_rating_review"],
-        "complaint_signal_source",
-    ] = "low-rating candidate"
-    merged_reviews.loc[
-        merged_reviews["is_calibrated_negative"],
-        "complaint_signal_source",
-    ] = "calibrated negative"
+    merged_reviews["is_complaint_candidate"] = complaint_candidate_mask(merged_reviews)
 
     category_options = ["All"] + sorted(merged_reviews["category"].dropna().unique().tolist())
     products_by_category: Dict[str, List[Tuple[str, str]]] = {"All": [("All", "All products")]}
@@ -387,8 +387,8 @@ def _plural(count: int, singular: str, plural: str | None = None) -> str:
 
 
 def _evidence_note(snapshot: Dict[str, Any]) -> str:
-    """Return an evidence warning based on negative-review support."""
-    negative_count = snapshot["negative_reviews"]
+    """Return an evidence warning based on complaint-candidate support."""
+    negative_count = snapshot["complaint_candidates"]
     if negative_count == 0:
         return (
             "No complaint candidates are available in this scope, so complaint analysis "
@@ -408,7 +408,7 @@ def _evidence_note(snapshot: Dict[str, Any]) -> str:
 
 
 def _format_available_negative_evidence(snapshot: Dict[str, Any], limit: int = 3) -> str:
-    """Format the available negative-review evidence for sparse scopes."""
+    """Format the available complaint-candidate evidence for sparse scopes."""
     representative = snapshot["representative_reviews"]
     if representative.empty:
         return "- No complaint-candidate evidence is available in this scope."
@@ -422,9 +422,9 @@ def _count_answer(snapshot: Dict[str, Any], scope_label: str) -> str:
         f"The current scope is '{scope_label}'. It contains "
         f"{_plural(snapshot['total_reviews'], 'review')}, "
         f"{_plural(snapshot['calibrated_sentiment_reviews'], 'calibrated sentiment review')}, "
-        f"{_plural(snapshot['negative_reviews'], 'complaint candidate')}, "
-        f"{_plural(snapshot['calibrated_negative_reviews'], 'calibrated negative review')}, and "
-        f"{_plural(snapshot['high_value_negative_reviews'], 'high-value complaint candidate')}."
+        f"{_plural(snapshot['calibrated_negative_reviews'], 'strict calibrated negative review')}, "
+        f"{_plural(snapshot['complaint_candidates'], 'dashboard complaint candidate')}, and "
+        f"{_plural(snapshot['high_value_complaint_candidates'], 'high-value complaint candidate')}."
     )
     return f"{answer}\n\nEvidence note: {note}" if note else answer
 
@@ -446,14 +446,14 @@ def _action_answer(snapshot: Dict[str, Any], scope_label: str) -> str:
             f"For '{scope_label}', use the available complaint candidate as a case-level signal, "
             "not as proof of a recurring product issue.\n\n"
             f"Evidence note: {note}\n\n"
-            f"Suggested next checks: read the full review, verify whether '{issue_hint}' "
+            f"Suggested next checks: read the full candidate review, verify whether '{issue_hint}' "
             "appears in more reviews at category level, and check whether the product page, "
             "instructions, or support content can address that specific customer pain point."
         )
 
     keyword_text = keyword_text or "the top complaint keywords"
     return (
-        f"For '{scope_label}', the negative-review evidence is large enough for a broader "
+        f"For '{scope_label}', the complaint-candidate evidence is large enough for a broader "
         f"scan. Start with the recurring terms ({keyword_text}), inspect representative "
         "reviews, and prioritise fixes that appear across multiple reviews."
     )
@@ -491,13 +491,12 @@ def _build_context_prompt(snapshot: Dict[str, Any], question: str) -> str:
     """Convert dashboard context into a compact prompt for Ark LLM use."""
     keyword_text = ", ".join(keyword for keyword, _ in snapshot["top_keywords"][:6]) or "none"
     review_bullets = _format_review_bullets(snapshot["representative_reviews"])
-    evidence_note = _evidence_note(snapshot) or "There is enough negative-review evidence for theme-level discussion."
+    evidence_note = _evidence_note(snapshot) or "There is enough complaint-candidate evidence for theme-level discussion."
     return (
         "You are an intelligent review analytics assistant for an e-commerce merchant. "
         "Use only the supplied dashboard context; do not invent products, counts, or reviews. "
         "Answer in the same language as the user's question. Follow this evidence policy: "
-        "Complaint candidates are reviews that are calibrated negative or have rating <= 3. "
-        "When there are fewer than 3 complaint candidates, do not call the result a recurring "
+        "when there are fewer than 3 complaint candidates, do not call the result a recurring "
         "theme or broad product problem. Frame it as available evidence or a case-level "
         "signal. If the user asks for more examples than exist, say how many are available. "
         "If the user asks for advice, give concise checks that match the evidence level.\n\n"
@@ -505,9 +504,9 @@ def _build_context_prompt(snapshot: Dict[str, Any], question: str) -> str:
         f"Total reviews: {snapshot['total_reviews']}\n"
         f"High-value reviews: {snapshot['high_value_reviews']}\n"
         f"Calibrated sentiment reviews: {snapshot['calibrated_sentiment_reviews']}\n"
-        f"Complaint candidates: {snapshot['negative_reviews']}\n"
-        f"Calibrated negative reviews: {snapshot['calibrated_negative_reviews']}\n"
-        f"High-value complaint candidates: {snapshot['high_value_negative_reviews']}\n"
+        f"Strict calibrated negative reviews: {snapshot['calibrated_negative_reviews']}\n"
+        f"Dashboard complaint candidates: {snapshot['complaint_candidates']}\n"
+        f"High-value complaint candidates: {snapshot['high_value_complaint_candidates']}\n"
         f"Evidence note: {evidence_note}\n"
         f"Average rating: {snapshot['average_rating']:.2f}\n"
         f"Unique products: {snapshot['unique_products']}\n"
@@ -569,7 +568,7 @@ def answer_chat_question(
             return (
                 f"Hi. You are viewing '{scope_label}'. This scope has "
                 f"{_plural(snapshot['total_reviews'], 'review')} and "
-                f"{_plural(snapshot['negative_reviews'], 'complaint candidate')}.\n\n"
+                f"{_plural(snapshot['complaint_candidates'], 'complaint candidate')}.\n\n"
                 f"{evidence_note}\n\n"
                 "I can help inspect available evidence, explain counts, or suggest what to check next."
             )
@@ -580,20 +579,6 @@ def answer_chat_question(
 
     if any(keyword in lowered for keyword in QUESTION_KEYWORDS["count"]):
         return _count_answer(snapshot, scope_label)
-
-    if any(keyword in lowered for keyword in QUESTION_KEYWORDS["example"]):
-        if snapshot["negative_reviews"] == 0:
-            return "There are no complaint candidates in the current scope."
-        if snapshot["negative_reviews"] < 3:
-            verb = "is" if snapshot["negative_reviews"] == 1 else "are"
-            return (
-                f"Only {_plural(snapshot['negative_reviews'], 'complaint candidate')} {verb} "
-                f"available in '{scope_label}', so I can show the available evidence rather "
-                f"than multiple representative examples:\n"
-                f"{_format_available_negative_evidence(snapshot, limit=3)}"
-            )
-        review_examples = _format_review_bullets(representative, include_excerpt=True)
-        return review_examples or "There are no representative review examples in the current scope yet."
 
     if any(keyword in lowered for keyword in QUESTION_KEYWORDS["problem"]):
         if snapshot["negative_reviews"] == 0:
@@ -617,6 +602,20 @@ def answer_chat_question(
             f"\nRepresentative complaint candidates:\n{bullet_text or '- No representative complaint candidates available yet.'}"
         )
 
+    if any(keyword in lowered for keyword in QUESTION_KEYWORDS["example"]):
+        if snapshot["negative_reviews"] == 0:
+            return "There are no complaint candidates in the current scope."
+        if snapshot["negative_reviews"] < 3:
+            verb = "is" if snapshot["negative_reviews"] == 1 else "are"
+            return (
+                f"Only {_plural(snapshot['complaint_candidates'], 'complaint candidate')} {verb} "
+                f"available in '{scope_label}', so I can show the available evidence rather "
+                f"than multiple representative examples:\n"
+                f"{_format_available_negative_evidence(snapshot, limit=3)}"
+            )
+        review_examples = _format_review_bullets(representative, include_excerpt=True)
+        return review_examples or "There are no representative review examples in the current scope yet."
+
     if any(keyword in lowered for keyword in QUESTION_KEYWORDS["summary"]):
         keyword_text = ", ".join(top_keywords[:5]) if top_keywords else "no clear complaint keywords"
         if evidence_note:
@@ -626,9 +625,9 @@ def answer_chat_question(
             return (
                 f"At a glance, '{scope_label}' has {snapshot['total_reviews']} reviews, "
                 f"an average rating of {snapshot['average_rating']:.2f}, and "
-                f"{_plural(snapshot['negative_reviews'], 'complaint candidate')}.\n\n"
+                f"{_plural(snapshot['complaint_candidates'], 'complaint candidate')}.\n\n"
                 f"{evidence_note}\n\n"
-                f"Available complaint signal: {keyword_text}."
+                f"Available negative signal: {keyword_text}."
                 f"{evidence_text}"
             )
         return (
@@ -653,7 +652,7 @@ def answer_chat_question(
         if llm_answer:
             return llm_answer
 
-    retrieved = _retrieve_reviews_for_question(question, dataframe[_complaint_candidate_mask(dataframe)])
+    retrieved = _retrieve_reviews_for_question(question, get_complaint_candidates(dataframe))
     if not retrieved.empty:
         if evidence_note:
             return (
@@ -669,7 +668,7 @@ def answer_chat_question(
     keyword_text = ", ".join(top_keywords[:5]) if top_keywords else "no clear complaint keywords"
     return (
         f"For '{scope_label}', the most reliable summary I can give right now is: "
-        f"{snapshot['total_reviews']} total reviews, {snapshot['negative_reviews']} complaint candidates, "
+        f"{snapshot['total_reviews']} total reviews, {snapshot['complaint_candidates']} complaint candidates, "
         f"and the main complaint keywords include {keyword_text}."
     )
 
@@ -677,7 +676,7 @@ def answer_chat_question(
 def get_chat_suggestions(scope_label: str) -> List[str]:
     """Return a short list of chat prompt suggestions."""
     return [
-        "Summarize available negative evidence",
+        "Summarize available complaint evidence",
         "Show available complaint candidates",
         "What should the merchant check next?",
     ]

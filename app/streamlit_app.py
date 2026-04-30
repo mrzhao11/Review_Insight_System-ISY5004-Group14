@@ -39,6 +39,7 @@ from src.visualization.dashboard_utils import (
     build_scope_snapshot,
     filter_scope_dataframe,
     get_chat_suggestions,
+    get_complaint_candidates,
 )
 
 
@@ -52,6 +53,7 @@ SUMMARY_STUDENT_DIR_CANDIDATES = [
 ]
 SUMMARY_MODEL_NAME = "google/flan-t5-small"
 DASHBOARD_SCOPE_SPLIT = "all"
+MIN_PRODUCT_COMPLAINT_CANDIDATES = 3
 UPLOAD_REQUIRED_COLUMNS = ("review_text",)
 UPLOAD_OPTIONAL_COLUMNS = (
     "review_title",
@@ -1156,7 +1158,7 @@ def main() -> None:
             <div class="hero-title">Review Insight Studio</div>
             <p class="hero-copy">
                 Start with the scope controls below, inspect key complaints, and turn long
-                negative reviews into concise, actionable issue titles.
+                complaint candidates into concise, actionable issue titles.
             </p>
         </div>
         """,
@@ -1247,6 +1249,47 @@ def main() -> None:
     )
     scope_key = f"{DASHBOARD_SCOPE_SPLIT}_{category}_{selected_product_id}"
     scope_snapshot = build_scope_snapshot(scope_dataframe, scope_label=scope_label)
+    explorer_dataframe = scope_dataframe
+    explorer_label = scope_label
+    explorer_scope_key = scope_key
+    explorer_fallback_note = ""
+
+    if (
+        selected_product_id != "All"
+        and scope_snapshot["complaint_candidates"] < MIN_PRODUCT_COMPLAINT_CANDIDATES
+    ):
+        fallback_category = category
+        if fallback_category == "All" and "category" in scope_dataframe.columns:
+            product_categories = scope_dataframe["category"].dropna().astype(str)
+            if not product_categories.empty:
+                fallback_category = product_categories.iloc[0]
+
+        if fallback_category and fallback_category != "All":
+            category_dataframe = filter_scope_dataframe(
+                merged_reviews,
+                category=fallback_category,
+                split=DASHBOARD_SCOPE_SPLIT,
+            )
+            category_label = format_category_label(fallback_category)
+            category_snapshot = build_scope_snapshot(
+                category_dataframe,
+                scope_label=f"{category_label} category",
+            )
+            if category_snapshot["complaint_candidates"] > scope_snapshot["complaint_candidates"]:
+                explorer_dataframe = category_dataframe
+                explorer_label = f"{category_label} category"
+                explorer_scope_key = f"{DASHBOARD_SCOPE_SPLIT}_{fallback_category}_category_fallback"
+                explorer_fallback_note = (
+                    "Product-level complaint evidence is sparse "
+                    f"({scope_snapshot['complaint_candidates']} candidate"
+                    f"{'' if scope_snapshot['complaint_candidates'] == 1 else 's'}). "
+                    f"Showing related complaint candidates from {category_label} for broader issue exploration."
+                )
+
+    explorer_snapshot = build_scope_snapshot(
+        explorer_dataframe,
+        scope_label=explorer_label,
+    )
 
     if selected_product_id != "All":
         st.markdown(
@@ -1282,10 +1325,10 @@ def main() -> None:
         metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
         metric_col1.metric("Test Reviews", f"{overview_snapshot['total_reviews']:,}")
         metric_col2.metric("High-value Reviews", f"{overview_snapshot['high_value_reviews']:,}")
-        metric_col3.metric("Complaint Candidates", f"{overview_snapshot['negative_reviews']:,}")
+        metric_col3.metric("Complaint Candidates", f"{overview_snapshot['complaint_candidates']:,}")
         metric_col4.metric(
             "High-value Candidates",
-            f"{overview_snapshot['high_value_negative_reviews']:,}",
+            f"{overview_snapshot['high_value_complaint_candidates']:,}",
         )
 
         chart_col1, chart_col2 = st.columns([1.2, 1])
@@ -1311,12 +1354,11 @@ def main() -> None:
             .agg(
                 total_reviews=("review_id", "count"),
                 high_value_reviews=("review_value_label", "sum"),
-                negative_reviews=("is_complaint_candidate", "sum"),
-                calibrated_negative_reviews=("is_calibrated_negative", "sum"),
+                complaint_candidates=("is_complaint_candidate", "sum"),
                 avg_rating=("rating", "mean"),
             )
             .reset_index()
-            .sort_values(by="negative_reviews", ascending=False)
+            .sort_values(by="complaint_candidates", ascending=False)
         )
         category_table["category"] = category_table["category"].map(format_category_label)
         category_table = category_table.rename(
@@ -1324,8 +1366,7 @@ def main() -> None:
                 "category": "Category",
                 "total_reviews": "Reviews",
                 "high_value_reviews": "High-value Reviews",
-                "negative_reviews": "Complaint Candidates",
-                "calibrated_negative_reviews": "Calibrated Negative",
+                "complaint_candidates": "Complaint Candidates",
                 "avg_rating": "Average Rating",
             }
         )
@@ -1340,22 +1381,24 @@ def main() -> None:
         scope_info_col.markdown("**Current Scope**")
         scope_info_col.write(scope_label)
         scope_metric2.metric("Reviews", f"{scope_snapshot['total_reviews']:,}")
-        scope_metric3.metric("Candidates", f"{scope_snapshot['negative_reviews']:,}")
+        scope_metric3.metric("Complaint Candidates", f"{scope_snapshot['complaint_candidates']:,}")
         scope_metric4.metric(
             "Verified Purchase Rate",
             f"{scope_snapshot['verified_purchase_rate']:.0%}",
         )
         if selected_product_id != "All":
             st.caption(f"Full product name: {selected_product_label}")
+        if explorer_fallback_note:
+            st.info(explorer_fallback_note)
 
         figure_col, review_col = st.columns([1, 1.1])
         with figure_col:
-            keyword_figure = build_keyword_figure(scope_snapshot["top_keywords"])
+            keyword_figure = build_keyword_figure(explorer_snapshot["top_keywords"])
             if keyword_figure is not None:
                 st.plotly_chart(
                     keyword_figure,
                     use_container_width=True,
-                    key=f"explorer_keyword_chart_{scope_key}",
+                    key=f"explorer_keyword_chart_{explorer_scope_key}",
                 )
             else:
                 st.info("No complaint keywords available for the current scope.")
@@ -1364,11 +1407,12 @@ def main() -> None:
                 f"""
                 <div class="section-card">
                     <strong>Scope summary</strong><br/>
-                    Average rating: {scope_snapshot['average_rating']:.2f}<br/>
-                    High-value reviews: {scope_snapshot['high_value_reviews']}<br/>
-                    Calibrated sentiment reviews: {scope_snapshot['calibrated_sentiment_reviews']}<br/>
-                    Calibrated negative reviews: {scope_snapshot['calibrated_negative_reviews']}<br/>
-                    High-value complaint candidates: {scope_snapshot['high_value_negative_reviews']}
+                    Explorer scope: {escape(explorer_label)}<br/>
+                    Average rating: {explorer_snapshot['average_rating']:.2f}<br/>
+                    High-value reviews: {explorer_snapshot['high_value_reviews']}<br/>
+                    Strict calibrated negatives: {explorer_snapshot['calibrated_negative_reviews']}<br/>
+                    Complaint candidates: {explorer_snapshot['complaint_candidates']}<br/>
+                    High-value candidates: {explorer_snapshot['high_value_complaint_candidates']}
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -1376,19 +1420,17 @@ def main() -> None:
 
         with review_col:
             st.markdown("**Representative Complaint Candidates**")
-            negative_reviews = scope_dataframe[
-                scope_dataframe["is_complaint_candidate"].fillna(False)
-            ]
+            complaint_reviews = get_complaint_candidates(explorer_dataframe)
             representative_reviews = (
-                scope_snapshot["representative_reviews"]
-                if not scope_snapshot["representative_reviews"].empty
-                else negative_reviews.head(3)
+                explorer_snapshot["representative_reviews"]
+                if not explorer_snapshot["representative_reviews"].empty
+                else complaint_reviews.head(3)
             )
             render_review_cards(representative_reviews)
 
         st.markdown("**AI Complaint Titles**")
-        render_ai_titles(negative_reviews, scope_key)
-        render_manual_title_generator(scope_key)
+        render_ai_titles(complaint_reviews, explorer_scope_key)
+        render_manual_title_generator(explorer_scope_key)
 
     with tab_live:
         render_live_analyzer()
@@ -1398,8 +1440,8 @@ def main() -> None:
 
     with tab_chat:
         render_chat(
-            scope_dataframe,
-            scope_label=scope_label,
+            explorer_dataframe,
+            scope_label=explorer_label,
             use_ark_llm=use_ark_llm,
         )
 
